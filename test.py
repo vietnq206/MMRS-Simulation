@@ -1,19 +1,34 @@
 import pygame
 import math
 
+
+#Map init
+
 wScreen = 500
 hScreen = 500
+numGrid = 20
+timeStep = 0.01
 
 win = pygame.display.set_mode((wScreen,hScreen))
+
 pygame.display.set_caption('MMRS')
+
+
+
+
+
 
 
 class robot(object):
     def __init__(self,x,y,radius,color):
         self.x = x
         self.y = y
+        self.speed = 0
         self.radius = radius
         self.color = color
+
+    def setSpeed(self,speed):
+        self.speed = speed
 
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
@@ -36,8 +51,15 @@ class robot(object):
         return (newx, newy)
 
 
+
+
+
 def redrawWindow():
-    win.fill((255,0,0))
+    win.fill((255,255,255))
+    for i in range(numGrid):
+        pygame.draw.line(win, (224,224,224),(i*int((wScreen/numGrid)),0), (i*int((wScreen/numGrid)),hScreen))
+        pygame.draw.line(win, (224,224,224),(0,i*int((hScreen/numGrid))), (wScreen , i*int((hScreen/numGrid))))
+
     rb1.draw(win)
     pygame.draw.line(win, (0,0,0),line[0], line[1])
     pygame.display.update()
@@ -70,6 +92,8 @@ power = 0
 angle = 0
 x = 0
 y = 0
+rb1.x = 0
+rb1.y = 0
 shoot = False
 clock = pygame.time.Clock()
 while run:
@@ -77,9 +101,12 @@ while run:
 
     time += 0.05
     po = robot.ballPath(x, y, power, angle, time)
-    rb1.x = po[0]
-    rb1.y = po[1]
-
+    # rb1.x = po[0] 
+    # rb1.y = po[1]
+    if ( rb1.x > 300):
+        rb1.speed = -20
+    rb1.x = rb1.speed*timeStep + rb1.x 
+    rb1.y = rb1.speed*timeStep + rb1.y
     line = [(rb1.x, rb1.y), pygame.mouse.get_pos()]
     redrawWindow()
 
@@ -90,6 +117,7 @@ while run:
         if event.type == pygame.MOUSEBUTTONDOWN:
             # if not shoot:
             time = 0
+            rb1.setSpeed(50)
             x = rb1.x
             y = rb1.y
             pos =pygame.mouse.get_pos()
