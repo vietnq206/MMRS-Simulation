@@ -1,5 +1,7 @@
+from turtle import width
 import pygame
 import math
+import numpy as np
 
 
 #Map init
@@ -9,7 +11,7 @@ hScreen = 500
 numGrid = 20
 timeStep = 0.01
 
-win = pygame.display.set_mode((wScreen,hScreen))
+screen= pygame.display.set_mode((wScreen,hScreen))
 
 pygame.display.set_caption('MMRS')
 
@@ -24,11 +26,18 @@ class robot(object):
         self.x = x
         self.y = y
         self.speed = 0
+        self.orient = 0
         self.radius = radius
         self.color = color
 
-    def setSpeed(self,speed):
+
+    def move(self,orient,speed):
+        self.orient = orient
         self.speed = speed
+        velx = math.cos(self.orient) * self.speed
+        vely = - math.sin(self.orient) * self.speed
+        self.x = velx*timeStep + self.x 
+        self.y = vely*timeStep + self.y
 
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
@@ -50,23 +59,36 @@ class robot(object):
 
         return (newx, newy)
 
+class obstacles:
+    def __init__(self,x,y,heigh,width,color):
+        self.x = x
+        self.y = y
+        self.heigh = heigh
+        self.width = width
+        self.color = color
+
+    def draw(self,screen):
+        pygame.draw.rect(screen, self.color, pygame.Rect(self.x, self.y, self.width, self.heigh))
+    def getHit(self,rb):
+        if (
+            ( (np.abs(rb.x-self.x)<=rb.radius or np.abs(rb.x-self.x - self.width)<=rb.radius)  and rb.y > self.y and rb.y < self.y + self.heigh)  or \
+            ( (np.abs(rb.y-self.y)<=rb.radius or np.abs(rb.y-self.y - self.heigh)<=rb.radius ) and rb.x > self.x and rb.x < self.x + self.width) or  \
+            (math.sqrt((rb.x-self.x)**2 + (rb.y  - self.y)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x-self.width)**2 + (rb.y  - self.y - self.heigh)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x)**2 + (rb.y  - self.y - self.heigh)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x-self.width)**2 + (rb.y  - self.y)**2) < rb.radius ) ):
+            
+            return True
+        else:
+            return False
 
 
 
+    
 
-def redrawWindow():
-    win.fill((255,255,255))
-    for i in range(numGrid):
-        pygame.draw.line(win, (224,224,224),(i*int((wScreen/numGrid)),0), (i*int((wScreen/numGrid)),hScreen))
-        pygame.draw.line(win, (224,224,224),(0,i*int((hScreen/numGrid))), (wScreen , i*int((hScreen/numGrid))))
-
-    rb1.draw(win)
-    pygame.draw.line(win, (0,0,0),line[0], line[1])
-    pygame.display.update()
-
-def findAngle(pos):
-    sX = rb1.x
-    sY = rb1.y
+def findAngle(pos,rb):
+    sX = rb.x
+    sY = rb.y
     try:
         angle = math.atan((sY - pos[1]) / (sX - pos[0]))
     except:
@@ -83,49 +105,56 @@ def findAngle(pos):
 
     return angle
 
-
-rb1 = robot(300,494,5,(255,255,255))
-
-run = True
-time = 0
-power = 0
-angle = 0
-x = 0
-y = 0
-rb1.x = 0
-rb1.y = 0
-shoot = False
-clock = pygame.time.Clock()
-while run:
-    clock.tick(200)
-
-    time += 0.05
-    po = robot.ballPath(x, y, power, angle, time)
-    # rb1.x = po[0] 
-    # rb1.y = po[1]
-    if ( rb1.x > 300):
-        rb1.speed = -20
-    rb1.x = rb1.speed*timeStep + rb1.x 
-    rb1.y = rb1.speed*timeStep + rb1.y
-    line = [(rb1.x, rb1.y), pygame.mouse.get_pos()]
-    redrawWindow()
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # if not shoot:
-            time = 0
-            rb1.setSpeed(50)
-            x = rb1.x
-            y = rb1.y
-            pos =pygame.mouse.get_pos()
-            shoot = True
-            power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][1])**2)/8
-            angle = findAngle(pos)
+def main():
+    #Robot initialize
+    rb1 = robot(0,0,5,(255,255,255))
+    rb1.x = 300
+    rb1.y = 300
 
 
+    #Obstacles initialize
+    otc1 = obstacles(100,100,100,50,(152,152,152))
 
-pygame.quit()
-quit()
+    run = True
+    #set initial position of Robot
+    screen.fill((255,255,255))
+    for i in range(numGrid):
+        pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGrid)),0), (i*int((wScreen/numGrid)),hScreen))
+        pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGrid))), (wScreen , i*int((hScreen/numGrid))))
+
+    clock = pygame.time.Clock()
+    while run:
+        clock.tick(200)
+
+        
+
+
+        rb1.draw(screen)
+        otc1.draw(screen)
+        
+        pygame.display.update() 
+
+        
+        
+
+        if otc1.getHit(rb1):
+            rb1.move(0,0)
+        else:
+            rb1.move( 3*math.pi/4, 50)
+
+            
+            
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos =pygame.mouse.get_pos()
+
+
+
+    pygame.quit()
+    quit()
+
+main()
