@@ -60,7 +60,7 @@ class DijkstraSearch:
             elif not open_set:
                 print("Cannot find path")
                 break
-            print("gege")
+            # print("gege")
             current_id = min(open_set, key=lambda o: open_set[o].cost)
             current_node = open_set[current_id]
 

@@ -6,11 +6,15 @@ from pathPlaning import *
 
 #Map init
 
-wScreen = 500
-hScreen = 500
-numGrid = 20
+wScreen = 800
+hScreen = 800
+numGridX = 20
+numGridY = 20
+sectorSize = int(wScreen/20)
+
+
 timeStep = 0.01
-robotRadius = 5
+robotRadius = 6
 
 screen= pygame.display.set_mode((wScreen,hScreen))
 
@@ -100,37 +104,7 @@ class obstacles:
         else:
             return False
 
-
-
-def main():
-    #Robot initialize
-    rb1 = robot(0,0,robotRadius,(255,255,255))
-    rb1.x = 150
-    rb1.y = 75
-    listnodes = list()
-
-    #Obstacles initialize
-    otc = list()
-    otc.append(obstacles(100,100,250,50,(152,152,152)))
-    otc.append(obstacles(200,100,250,50,(152,152,152)))
-    otc.append(obstacles(300,100,250,50,(152,152,152)))
-    otc.append(obstacles(400,100,250,50,(152,152,152)))
-    otc.append(obstacles(50,400,50,150,(152,152,152)))
-    otc.append(obstacles(300,400,50,150,(152,152,152)))
-
-    
-    #Path planning
-    for elm in otc :
-        for node in elm.nodes:
-            listnodes.append(node)
-
-    sx, sy = 50, 200  # [m]
-    gx, gy = 500, 425  # [m]
-    expand_distance = robotRadius
-    x, y = VisibilityRoadMap(expand_distance, do_plot=False)\
-        .planning(sx, sy, gx, gy, otc)
-
-
+def cubic_spline_planer(x,y):
     ds = 0.1  # [m] distance of each interpolated points
 
     sp = Spline2D(x, y)
@@ -143,6 +117,62 @@ def main():
         ry.append(iy)
         ryaw.append(sp.calc_yaw(i_s))
         rk.append(sp.calc_curvature(i_s))
+    
+    return rx,ry,ryaw,rk
+
+
+def main():
+    #Robot initialize
+    rb1 = robot(0,0,robotRadius,(255,255,255))
+    rb1.x = 150
+    rb1.y = 75
+    listnodes = list()
+
+    #Obstacles initialize
+    otc = list()
+    otc.append(obstacles(sectorSize*5,0,sectorSize,sectorSize*2,(255,0,0)))
+    otc.append(obstacles(sectorSize*10,0,sectorSize,sectorSize*2,(255,0,0)))
+    otc.append(obstacles(sectorSize*15,0,sectorSize,sectorSize*2,(255,0,0)))
+
+    otc.append(obstacles(sectorSize*5,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
+    otc.append(obstacles(sectorSize*10,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
+    otc.append(obstacles(sectorSize*15,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
+    otc.append(obstacles(sectorSize*4,sectorSize*14,sectorSize*3,sectorSize*5,(152,152,152)))
+    otc.append(obstacles(sectorSize*12,sectorSize*14,sectorSize*3,sectorSize*5,(152,152,152)))
+
+
+
+    #Not safe area:
+    othernodes = list()
+    # for col in range(1,numGridX-1):
+    #     for row in range(1,numGridY-1):
+    #         if ( col%2 == 0 and row %2 ==0):
+    #             centerX = col*int((wScreen/numGridX))
+    #             centerY = row*int((hScreen/numGridY))
+    #             othernodes.append( obstacles(centerX,centerY,0,0,(0,0,0)))
+    #             # othernodes.append( DijkstraSearch.Node(centerX-robotRadius,centerY-robotRadius))
+    #             # othernodes.append( DijkstraSearch.Node(centerX+robotRadius,centerY+robotRadius))
+    #             # othernodes.append( DijkstraSearch.Node(centerX+robotRadius,centerY-robotRadius))
+    #             # othernodes.append( DijkstraSearch.Node(centerX-robotRadius,centerY+robotRadius))
+
+           
+             
+
+
+    
+    #Path planning
+    for elm in otc :
+        for node in elm.nodes:
+            listnodes.append(node)
+
+    sx, sy = 0, 200  # [m]
+    gx, gy = 500, 425  # [m]
+    expand_distance = robotRadius
+
+    rx, ry = VisibilityRoadMap(expand_distance, do_plot=False)\
+        .planning(sx, sy, gx, gy, otc, othernodes)
+    # Apply smooth path:
+    # rx,ry,ryaw,rk = cubic_spline_planer(rx,ry)
 
 
 
@@ -167,10 +197,16 @@ def main():
             pygame.draw.line(screen,(255,0,0),(rx[i],ry[i]),(rx[i+1],ry[i+1]))
 
         
-        for i in range(numGrid):
-            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGrid)),0), (i*int((wScreen/numGrid)),hScreen))
-            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGrid))), (wScreen , i*int((hScreen/numGrid))))
-           
+        for i in range(numGridX):
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
+
+        for i in range(numGridY):
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
+
+
+
+
+
         pygame.display.update() 
         
         #Check if it hit the obstacle
@@ -180,11 +216,6 @@ def main():
         if rb1.hitBoundaries():
             orient = orient + math.pi/2
 
-
-
-
-        # if otc[0].getHit(rb1):
-        #     orient = orient + math.pi/2
 
         rb1.move( orient, 50)    
 

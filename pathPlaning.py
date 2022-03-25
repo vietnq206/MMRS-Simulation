@@ -17,12 +17,15 @@ class VisibilityRoadMap:
         self.expand_distance = expand_distance
         self.do_plot = do_plot
 
-    def planning(self, start_x, start_y, goal_x, goal_y, obstacles):
+    def planning(self, start_x, start_y, goal_x, goal_y, obstacles, othernodes ):
+        curr_obst = []
+        curr_obst.extend(obstacles)
+        curr_obst.extend(othernodes)
 
         nodes = self.generate_visibility_nodes(start_x, start_y,
-                                               goal_x, goal_y, obstacles)
-
-        road_map_info = self.generate_road_map_info(nodes, obstacles)
+                                               goal_x, goal_y, curr_obst)
+        
+        road_map_info = self.generate_road_map_info(nodes, curr_obst)
 
         # if self.do_plot:
         #     self.plot_road_map(nodes, road_map_info)
@@ -115,6 +118,14 @@ class VisibilityRoadMap:
  
             if Geometry.is_seg_intersect(p1, p2, p3, p4):
                 return False
+
+        # p1 = Geometry.Point(target_node.x, target_node.y)
+        # p2 = Geometry.Point(node.x, node.y)
+        # p3 = Geometry.Point(obstacle.edge[0][0], obstacle.edge[0][1])
+        # p4 = Geometry.Point(obstacle.edge[len(obstacle.nodes)-1][0], obstacle.edge[len(obstacle.nodes)-1][1])
+
+        # if Geometry.is_seg_intersect(p1, p2, p3, p4):
+        #     return False
 
         return True
 
