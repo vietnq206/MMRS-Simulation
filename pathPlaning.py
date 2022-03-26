@@ -17,21 +17,17 @@ class VisibilityRoadMap:
         self.expand_distance = expand_distance
         self.do_plot = do_plot
 
-    def planning(self, start_x, start_y, goal_x, goal_y, obstacles, othernodes ):
-        curr_obst = []
-        curr_obst.extend(obstacles)
-        curr_obst.extend(othernodes)
+    def planning(self, start_x, start_y, goal_x, goal_y, access_nodes):
 
         nodes = self.generate_visibility_nodes(start_x, start_y,
-                                               goal_x, goal_y, curr_obst)
-        
-        road_map_info = self.generate_road_map_info(nodes, curr_obst)
+                                               goal_x, goal_y, access_nodes)
+
+        road_map_info = self.generate_road_map_info(nodes)
 
         # if self.do_plot:
         #     self.plot_road_map(nodes, road_map_info)
         #     plt.pause(1.0)
-        # for elm in nodes:
-        #     print(elm.x,elm.y)
+
         rx, ry = DijkstraSearch(show_animation).search(
             start_x, start_y,
             goal_x, goal_y,
@@ -43,16 +39,20 @@ class VisibilityRoadMap:
         return rx, ry
 
     def generate_visibility_nodes(self, start_x, start_y, goal_x, goal_y,
-                                  obstacles):
+                                  access_nodes):
 
         # add start and goal as nodes
         nodes = [DijkstraSearch.Node(start_x, start_y),
                  DijkstraSearch.Node(goal_x, goal_y, 0, None)]
 
         # add vertexes in configuration space as nodes
-        for obstacle in obstacles:
-            for vertex in obstacle.nodes:
-                nodes.append(DijkstraSearch.Node(vertex[0], vertex[1]))
+        for elm in access_nodes:
+            if (start_x, start_y) != elm and (goal_x, goal_y) != elm:
+                nodes.append(DijkstraSearch.Node(elm[0], elm[1]))
+
+        # for obstacle in obstacles:
+        #     for vertex in obstacle.nodes:
+        #         nodes.append(DijkstraSearch.Node(vertex[0], vertex[1]))
             # cvx_list, cvy_list = self.calc_vertexes_in_configuration_space(
             #     obstacle.x_list, obstacle.y_list)
 
@@ -82,25 +82,42 @@ class VisibilityRoadMap:
 
         return cvx_list, cvy_list
 
-    def generate_road_map_info(self, nodes, obstacles):
+    def generate_road_map_info(self, nodes):
 
         road_map_info_list = []
 
         for target_node in nodes:
+            possible_reach_nodes = []
+            if(target_node.x % 2 == 1):
+                possible_reach_nodes.append((target_node.x,target_node.y + 1)) 
+            else:
+                possible_reach_nodes.append((target_node.x,target_node.y - 1)) 
+
+            if(target_node.y % 2 == 1):
+                possible_reach_nodes.append((target_node.x +1 ,target_node.y)) 
+            else:
+                possible_reach_nodes.append((target_node.x -1,target_node.y)) 
+
+            if ( np.abs(target_node.x - target_node.y) % 4 == 0):
+                possible_reach_nodes.append((target_node.x + 1,target_node.y + 1))
+            elif ( np.abs(target_node.x - target_node.y) % 4 == 2):
+                possible_reach_nodes.append((target_node.x - 1,target_node.y - 1))
+
+
             road_map_info = []
             for node_id, node in enumerate(nodes):
                 if np.hypot(target_node.x - node.x,
                             target_node.y - node.y) <= 0.1:
                     continue
-                
-                is_valid = True
-                for obstacle in obstacles:
-                    if not self.is_edge_valid(target_node, node, obstacle):
-                        # print("Fail")
-                        is_valid = False
-                        break
-                if is_valid:
-                    # print("test")
+
+                # is_valid = True
+                # for elm in access_nodes:
+                #     if not self.is_edge_valid(target_node, node, obstacle):
+                #         is_valid = False
+                #         break
+                # if is_valid:
+                #     road_map_info.append(node_id)
+                if (node.x,node.y) in possible_reach_nodes:
                     road_map_info.append(node_id)
 
             road_map_info_list.append(road_map_info)

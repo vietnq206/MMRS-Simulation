@@ -3,7 +3,7 @@ import pygame
 import math
 import numpy as np
 from pathPlaning import *
-
+from dijkstra_search import DijkstraSearch
 #Map init
 
 wScreen = 800
@@ -78,27 +78,33 @@ class obstacles:
         self.heigh = heigh
         self.width = width
         self.color = color
-        self.nodes = ((x-robotRadius,y-robotRadius),
-                     (x+width+robotRadius,y-robotRadius),
-                     (x-robotRadius,y+heigh+robotRadius),
-                     (x+width+robotRadius, y+heigh+robotRadius))   
+
+        self.nodes = []
+        for row in range(self.x,self.x+self.width+1):
+            for col in range(self.y,self.y + self.heigh +1):
+                self.nodes.append((row,col))
+
+        # self.nodes = ((x-robotRadius,y-robotRadius),
+        #              (x+width+robotRadius,y-robotRadius),
+        #              (x-robotRadius,y+heigh+robotRadius),
+        #              (x+width+robotRadius, y+heigh+robotRadius))   
         self.edge =  ((x-0,y-0),
                      (x+width+0,y-0),
                      (x-0,y+heigh+0),
                      (x+width+0, y+heigh+0))     
 
     def draw(self,screen):
-        pygame.draw.rect(screen, self.color, pygame.Rect(self.x, self.y, self.width, self.heigh))
+        pygame.draw.rect(screen, self.color, pygame.Rect(self.x*sectorSize, self.y*sectorSize, self.width*sectorSize, self.heigh*sectorSize))
         for elm in self.nodes:
             pygame.draw.circle(screen, (255,0,0), elm, 2)
     def getHit(self,rb):
         if (
-            ( (np.abs(rb.x-self.x)<=rb.radius or np.abs(rb.x-self.x - self.width)<=rb.radius)  and rb.y > self.y and rb.y < self.y + self.heigh)  or \
-            ( (np.abs(rb.y-self.y)<=rb.radius or np.abs(rb.y-self.y - self.heigh)<=rb.radius ) and rb.x > self.x and rb.x < self.x + self.width) or  \
-            (math.sqrt((rb.x-self.x)**2 + (rb.y  - self.y)**2) < rb.radius ) or \
-            (math.sqrt((rb.x-self.x-self.width)**2 + (rb.y  - self.y - self.heigh)**2) < rb.radius ) or \
-            (math.sqrt((rb.x-self.x)**2 + (rb.y  - self.y - self.heigh)**2) < rb.radius ) or \
-            (math.sqrt((rb.x-self.x-self.width)**2 + (rb.y  - self.y)**2) < rb.radius ) ):
+            ( (np.abs(rb.x-self.x*sectorSize)<=rb.radius or np.abs(rb.x-self.x*sectorSize - self.width*sectorSize)<=rb.radius)  and rb.y > self.y*sectorSize and rb.y < self.y*sectorSize + self.heigh*sectorSize)  or \
+            ( (np.abs(rb.y-self.y*sectorSize)<=rb.radius or np.abs(rb.y-self.y*sectorSize - self.heigh*sectorSize)<=rb.radius ) and rb.x > self.x*sectorSize and rb.x < self.x*sectorSize + self.width*sectorSize) or  \
+            (math.sqrt((rb.x-self.x*sectorSize)**2 + (rb.y  - self.y*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize-self.width*sectorSize)**2 + (rb.y  - self.y*sectorSize - self.heigh*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize)**2 + (rb.y  - self.y*sectorSize - self.heigh*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize-self.width*sectorSize)**2 + (rb.y  - self.y*sectorSize)**2) < rb.radius ) ):
             
             return True
         else:
@@ -130,15 +136,27 @@ def main():
 
     #Obstacles initialize
     otc = list()
-    otc.append(obstacles(sectorSize*5,0,sectorSize,sectorSize*2,(255,0,0)))
-    otc.append(obstacles(sectorSize*10,0,sectorSize,sectorSize*2,(255,0,0)))
-    otc.append(obstacles(sectorSize*15,0,sectorSize,sectorSize*2,(255,0,0)))
+    otc.append(obstacles(5,0,1,2,(255,0,0)))
+    otc.append(obstacles(10,0,1,2,(255,0,0)))
+    otc.append(obstacles(15,0,1,2,(255,0,0)))
 
-    otc.append(obstacles(sectorSize*5,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
-    otc.append(obstacles(sectorSize*10,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
-    otc.append(obstacles(sectorSize*15,sectorSize*6,sectorSize*5,sectorSize*2,(152,152,152)))
-    otc.append(obstacles(sectorSize*4,sectorSize*14,sectorSize*3,sectorSize*5,(152,152,152)))
-    otc.append(obstacles(sectorSize*12,sectorSize*14,sectorSize*3,sectorSize*5,(152,152,152)))
+    otc.append(obstacles(5,6,5,2,(152,152,152)))
+    otc.append(obstacles(10,6,5,2,(152,152,152)))
+    otc.append(obstacles(15,6,5,2,(152,152,152)))
+    otc.append(obstacles(4,14,3,5,(152,152,152)))
+    otc.append(obstacles(12,14,3,5,(152,152,152)))
+
+    otcs_nodes = []
+    for elm in otc:
+        otcs_nodes.extend(elm.nodes)
+
+    access_nodes = list()
+    for row in range(1,numGridX):
+        for col in range(1,numGridY):
+            if (row,col) not in otcs_nodes:
+                access_nodes.append((row,col))
+
+    
 
 
 
@@ -156,32 +174,36 @@ def main():
     #             # othernodes.append( DijkstraSearch.Node(centerX-robotRadius,centerY+robotRadius))
 
            
-             
 
 
-    
+
     #Path planning
     for elm in otc :
         for node in elm.nodes:
             listnodes.append(node)
 
-    sx, sy = 0, 200  # [m]
-    gx, gy = 500, 425  # [m]
+    sx, sy = 1, 1  # [m]
+    gx, gy = 16, 19  # [m]
     expand_distance = robotRadius
 
     rx, ry = VisibilityRoadMap(expand_distance, do_plot=False)\
-        .planning(sx, sy, gx, gy, otc, othernodes)
+        .planning(sx, sy, gx, gy, access_nodes)
     # Apply smooth path:
     # rx,ry,ryaw,rk = cubic_spline_planer(rx,ry)
 
 
+    print(rx)
+    print("----------")
 
+    print(ry)
     # print(rx,ry)
     run = True
 
+
     #set initial position of Robot
+    
     orient = -math.pi/4
- 
+
     clock = pygame.time.Clock()
     while run:
         clock.tick(200)
@@ -193,8 +215,7 @@ def main():
         for elm in otc :
             elm.draw(screen)
 
-        for i in range(len(rx)-1):
-            pygame.draw.line(screen,(255,0,0),(rx[i],ry[i]),(rx[i+1],ry[i+1]))
+
 
         
         for i in range(numGridX):
@@ -204,8 +225,11 @@ def main():
             pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
 
 
-
-
+        # for elm in access_nodes:
+        #    pygame.draw.circle(screen, (255,0,0),(elm[0]*sectorSize,elm[1]*sectorSize), 2)    
+           
+        for i in range(len(rx)-1):
+            pygame.draw.line(screen,(255,0,0),(rx[i]*sectorSize,ry[i]*sectorSize),(rx[i+1]*sectorSize,ry[i+1]*sectorSize))
 
         pygame.display.update() 
         
