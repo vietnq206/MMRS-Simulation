@@ -1,5 +1,17 @@
 
+
+from turtle import width
+import pygame
+import math
 import numpy as np
+from dijkstra_search import DijkstraSearch
+from pathPlaning import *
+
+from enum import Enum
+
+
+
+
 wScreen = 800
 hScreen = 800
 numGridX = 20
@@ -9,13 +21,22 @@ sectorSize = int(wScreen/20)
 speedMax = 20
 timeStep = 0.01
 robotRadius = 6
+
 ##############
 st_STOP = 0
 st_RUN = 1
 st_ASK = 2
 
 
-
+def get_angle(vec):
+    angle =  math.atan2(vec[1], vec[0])
+    while (angle < -np.pi or angle > np.pi):
+        if ( angle < -np.pi):
+            angle += 2*np.pi
+        else:
+            angle -= 2*np.pi
+    
+    return angle
 
 class Supervisor:
     def __init__(self,robots):
@@ -49,3 +70,122 @@ class Supervisor:
             print(s)
 
     
+class robot(object):
+    def __init__(self,nodeX,nodeY,radius,color):
+        self.loc_node_x = nodeX
+        self.loc_node_y = nodeY
+        self.x = nodeX*sectorSize
+        self.y = nodeY*sectorSize
+        self.speed = 0
+        self.orient = 0
+        self.radius = radius
+        self.color = color
+
+        self.release_prevNode = False
+        self.path = []
+ 
+        self.indexPath = 1
+        self.state = st_RUN
+
+    def draw(self, win):
+        pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
+        pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
+    
+    def release_node(self):
+        return self.path[self.indexPath-1]
+    def asking_node(self):
+        return self.path[self.indexPath+1]    
+    def request_accepted(self):
+        self.state = st_RUN
+        self.indexPath += 1
+
+
+    def move(self,speed):
+        if self.state == st_RUN:   
+            #Test if the robot has achived haft of the sector
+            middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
+            gap = sectorSize/14
+            if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) :
+                self.release_prevNode = True
+            else: 
+                self.release_prevNode = False
+              
+
+            # runnign
+            self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
+            self.speed = speed
+            velx = math.cos(self.orient) * self.speed
+            vely = math.sin(self.orient) * self.speed
+            self.x = velx*timeStep + self.x 
+            self.y = vely*timeStep + self.y
+
+
+        
+
+    def reachNodePath(self):
+        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100):
+            self.state = st_ASK
+            
+
+    def hitBoundaries(self):
+        if any( (self.x <= self.radius,self.y <= self.radius,self.x >= wScreen - self.radius,self.y >= hScreen - self.radius)):
+            return True
+        else:
+            return False
+    def pathAssign(self,path):
+        [X,Y] = path
+        self.x = X[0]*sectorSize
+        self.y = Y[0]*sectorSize
+        for x,y in zip( X,Y):
+            self.path.append(np.array([x,y]))
+
+
+    @staticmethod
+    def ballPath(startx, starty, power, ang, time):
+        angle = ang
+        velx = math.cos(angle) * power
+        vely = math.sin(angle) * power
+
+        distX = velx * time
+        distY = (vely * time) 
+
+        newx = round(distX + startx)
+        newy = round(starty - distY)
+
+
+        return (newx, newy)
+
+
+class obstacles:
+    def __init__(self,x,y,heigh,width,color):
+        #geometry initilization
+        self.x = x
+        self.y = y
+        self.heigh = heigh
+        self.width = width
+        self.color = color
+
+        self.nodes = []
+        for row in range(self.x,self.x+self.width+1):
+            for col in range(self.y,self.y + self.heigh +1):
+                self.nodes.append((row,col))
+
+
+    def draw(self,screen):
+        pygame.draw.rect(screen, self.color, pygame.Rect(self.x*sectorSize, self.y*sectorSize, self.width*sectorSize, self.heigh*sectorSize))
+        for elm in self.nodes:
+            pygame.draw.circle(screen, (255,0,0), elm, 2)
+
+    def getHit(self,rb):
+        if (
+            ( (np.abs(rb.x-self.x*sectorSize)<=rb.radius or np.abs(rb.x-self.x*sectorSize - self.width*sectorSize)<=rb.radius)  and rb.y > self.y*sectorSize and rb.y < self.y*sectorSize + self.heigh*sectorSize)  or \
+            ( (np.abs(rb.y-self.y*sectorSize)<=rb.radius or np.abs(rb.y-self.y*sectorSize - self.heigh*sectorSize)<=rb.radius ) and rb.x > self.x*sectorSize and rb.x < self.x*sectorSize + self.width*sectorSize) or  \
+            (math.sqrt((rb.x-self.x*sectorSize)**2 + (rb.y  - self.y*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize-self.width*sectorSize)**2 + (rb.y  - self.y*sectorSize - self.heigh*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize)**2 + (rb.y  - self.y*sectorSize - self.heigh*sectorSize)**2) < rb.radius ) or \
+            (math.sqrt((rb.x-self.x*sectorSize-self.width*sectorSize)**2 + (rb.y  - self.y*sectorSize)**2) < rb.radius ) ):
+            
+            return True
+        else:
+            return False
+ 
