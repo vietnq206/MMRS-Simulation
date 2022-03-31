@@ -22,6 +22,7 @@ class VisibilityRoadMap:
         nodes = self.generate_visibility_nodes(start_x, start_y,
                                                goal_x, goal_y, access_nodes)
 
+
         road_map_info = self.generate_road_map_info(nodes)
 
         # if self.do_plot:
@@ -93,15 +94,21 @@ class VisibilityRoadMap:
             else:
                 possible_reach_nodes.append((target_node.x,target_node.y - 1)) 
 
-            if(target_node.y % 2 == 1):
+            if(target_node.y % 2 == 0):
                 possible_reach_nodes.append((target_node.x +1 ,target_node.y)) 
             else:
                 possible_reach_nodes.append((target_node.x -1,target_node.y)) 
 
-            if ( np.abs(target_node.x - target_node.y) % 4 == 0):
+            if ( np.abs(target_node.y - target_node.x) % 4 == 0):
                 possible_reach_nodes.append((target_node.x + 1,target_node.y + 1))
-            elif ( np.abs(target_node.x - target_node.y) % 4 == 2):
+            elif ( np.abs(target_node.y - target_node.x) % 4 == 2):
                 possible_reach_nodes.append((target_node.x - 1,target_node.y - 1))
+
+            if ( np.abs(target_node.y + target_node.x) % 4 == 0):
+                possible_reach_nodes.append((target_node.x - 1,target_node.y + 1))
+            elif ( np.abs(target_node.y + target_node.x) % 4 == 2):
+                possible_reach_nodes.append((target_node.x + 1,target_node.y - 1))
+
 
 
             road_map_info = []

@@ -5,16 +5,28 @@ import numpy as np
 from dijkstra_search import DijkstraSearch
 from pathPlaning import *
 from Supervisor import *
+from enum import Enum
+
+
 #Map init
 
+wScreen = 800
+hScreen = 800
+numGridX = 20
+numGridY = 20
+sectorSize = int(wScreen/20)
+
+speedMax = 20
+timeStep = 0.01
+robotRadius = 6
 
 screen= pygame.display.set_mode((wScreen,hScreen))
 
 
 
 
-def get_angle(vecX,vecY):
-    angle =  math.atan2(vecY, vecX)
+def get_angle(vec):
+    angle =  math.atan2(vec[1], vec[0])
     while (angle < -np.pi or angle > np.pi):
         if ( angle < -np.pi):
             angle += 2*np.pi
@@ -25,40 +37,66 @@ def get_angle(vecX,vecY):
 
 
 class robot(object):
-    def __init__(self,x,y,radius,color):
-        self.x = x
-        self.y = y
+    def __init__(self,nodeX,nodeY,radius,color):
+        self.loc_node_x = nodeX
+        self.loc_node_y = nodeY
+        self.x = nodeX*sectorSize
+        self.y = nodeY*sectorSize
         self.speed = 0
         self.orient = 0
         self.radius = radius
         self.color = color
 
-        
-        self.pathX = []
-        self.pathY = []
+        self.release_prevNode = False
+        self.path = []
+ 
         self.indexPath = 1
+        self.state = st_RUN
 
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
         pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
-        
+    
+    def release_node(self):
+        return self.path[self.indexPath-1]
+    def asking_node(self):
+        return self.path[self.indexPath+1]    
+    def request_accepted(self):
+        self.state = st_RUN
+        # self.release_prevNode = False
+        self.indexPath += 1
 
 
     def move(self,speed):
-        self.orient = get_angle(self.pathX[self.indexPath]*sectorSize-self.x,self.pathY[self.indexPath]*sectorSize - self.y)
-        self.speed = speed
-        velx = math.cos(self.orient) * self.speed
-        vely = math.sin(self.orient) * self.speed
-        self.x = velx*timeStep + self.x 
-        self.y = vely*timeStep + self.y
+        if self.state == st_RUN:   
+            #Test if the robot has achived haft of the sector
+            middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
+            gap = sectorSize/14
+            if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) :
+                self.release_prevNode = True
+            else: 
+                self.release_prevNode = False
+              
+
+            # runnign
+            self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
+            self.speed = speed
+            velx = math.cos(self.orient) * self.speed
+            vely = math.sin(self.orient) * self.speed
+            self.x = velx*timeStep + self.x 
+            self.y = vely*timeStep + self.y
+
 
         
 
     def reachNodePath(self):
-        if ( np.abs(np.linalg.norm(np.array([self.x,self.y])-np.array([self.pathX[self.indexPath]*sectorSize,self.pathY[self.indexPath]*sectorSize]))) <= 0.1):
-            return True
-        else:
-            return False
+        # if ( np.abs(np.linalg.norm(np.array([self.x,self.y])-np.array([self.pathX[self.indexPath]*sectorSize,self.pathY[self.indexPath]*sectorSize]))) <= 0.1):
+        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100):
+            self.state = st_ASK
+            
+        #     return True
+        # else:
+        #     return False
 
 
 
@@ -68,8 +106,10 @@ class robot(object):
         else:
             return False
     def pathAssign(self,path):
+        [X,Y] = path
+        for x,y in zip( X,Y):
+            self.path.append(np.array([x,y]))
 
-        [self.pathX,self.pathY] = path
 
     @staticmethod
     def ballPath(startx, starty, power, ang, time):
@@ -124,6 +164,15 @@ class obstacles:
         else:
             return False
 
+
+
+
+
+
+
+
+
+
 def cubic_spline_planer(x,y):
     ds = 0.1  # [m] distance of each interpolated points
 
@@ -143,9 +192,10 @@ def cubic_spline_planer(x,y):
 
 def main():
     #Robot initialize
-    rb1 = robot(0,0,robotRadius,(255,255,255))
-    rb1.x = 100
-    rb1.y = 100
+    robots = list()
+    robots.append(robot(1,0,robotRadius,(255,255,222)))
+    robots.append(robot(1,0,robotRadius,(255,111,222)))
+
     listnodes = list()
 
     #Obstacles initialize
@@ -165,8 +215,8 @@ def main():
         otcs_nodes.extend(elm.nodes)
 
     access_nodes = list()
-    for row in range(1,numGridX):
-        for col in range(1,numGridY):
+    for row in range(0,numGridX):
+        for col in range(0,numGridY):
             if (row,col) not in otcs_nodes:
                 access_nodes.append((row,col))
 
@@ -195,8 +245,8 @@ def main():
         for node in elm.nodes:
             listnodes.append(node)
 
-    sx, sy = 1, 1  # [m]
-    gx, gy = 16, 19  # [m]
+    sx, sy = 1, 19  # [m]
+    gx, gy = 18, 3  # [m]
     expand_distance = robotRadius
 
     rx, ry = VisibilityRoadMap(expand_distance, do_plot=False)\
@@ -204,38 +254,51 @@ def main():
     # Apply smooth path:
     # rx,ry,ryaw,rk = cubic_spline_planer(rx,ry)
     
-    rb1.pathAssign(VisibilityRoadMap(expand_distance, do_plot=False)\
+    robots[1].pathAssign(VisibilityRoadMap(expand_distance, do_plot=False)\
+        .planning(16 ,19, 1, 1, access_nodes))
+    robots[0].pathAssign(VisibilityRoadMap(expand_distance, do_plot=False)\
         .planning(sx, sy, gx, gy, access_nodes))
     
 
     
-    print(rb1.pathY)
+   
     print("----------")
 
-    print(ry)
-    # print(rx,ry)
-    rb1.x = rb1.pathX[0]*sectorSize
-    rb1.y = rb1.pathY[0]*sectorSize
-
+    # # print(rx,ry)
+    # robots[0].x = robots[0].pathX[0]*sectorSize
+    # robots[0].y = robots[0].pathY[0]*sectorSize
+    [robots[0].x,robots[0].y] = robots[0].path[0]*sectorSize
+    [robots[1].x,robots[1].y] = robots[1].path[0]*sectorSize
     run = True
 
 
     #set initial position of Robot
     
-    
+    # print("Path robot1")
+    # print(robots[0].path)
+    # print("Path robot2")
+    # print(robots[1].path)
+
+    #Superviosr initialize
+    supervisor = Supervisor(robots)
+    supervisor.print_register_map()
+
 
     clock = pygame.time.Clock()
     while run:
         clock.tick(200)
-
+        supervisor.ask_register()
+        supervisor.print_register_map()
+        supervisor.release_register()
         #
         screen.fill((255,255,255))
  
-        rb1.draw(screen)
+        robots[0].draw(screen)
+        robots[1].draw(screen)
         for elm in otc :
             elm.draw(screen)
 
-
+        
 
         
         for i in range(numGridX):
@@ -250,20 +313,43 @@ def main():
            
         for i in range(len(rx)-1):
             pygame.draw.line(screen,(255,0,0),(rx[i]*sectorSize,ry[i]*sectorSize),(rx[i+1]*sectorSize,ry[i+1]*sectorSize))
-
+            
+        for i in range(len(robots[1].path)-1):
+            pygame.draw.line(screen,(255,0,0),robots[1].path[i]*sectorSize,robots[1].path[i+1]*sectorSize)
         pygame.display.update() 
         
+        robots[0].reachNodePath()
+        robots[1].reachNodePath()
+
         #Check if it hit the obstacle
-        for elm in otc:
-            if elm.getHit(rb1):
-                orient = orient + math.pi/2
-        if rb1.hitBoundaries():
-            orient = orient + math.pi/2
+        # for elm in otc:
+        #     if elm.getHit(robots[0]):
+        #         orient = orient + math.pi/2
 
 
-        rb1.move(speedMax)    
-        if(rb1.reachNodePath() and rb1.indexPath < len(rb1.pathX)-1):
-            rb1.indexPath += 1
+        # if robots[0].hitBoundaries():
+        #     orient = orient + math.pi/2
+
+
+        # robots[0].move(speedMax)    
+        # robots[1].move(speedMax)  
+
+        # if(robots[0].reachNodePath() and robots[0].indexPath < len(robots[0].path)-1):
+        #     robots[0].indexPath += 1
+
+        # if(robots[1].reachNodePath() and robots[1].indexPath < len(robots[1].path)-1):
+        #     robots[1].indexPath += 1
+
+        if( robots[0].indexPath < len(robots[0].path)-1):
+            robots[0].move(speedMax)
+        else:
+            robots[0].move(0)
+            
+
+        # if( robots[1].indexPath < len(robots[1].path)-1):
+        #     robots[1].move(speedMax) 
+        # else:
+        #     robots[1].move(0)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
