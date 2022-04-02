@@ -1,19 +1,6 @@
 from Supervisor import *
 
 
-#Map init
-
-wScreen = 800
-hScreen = 800
-numGridX = 20
-numGridY = 20
-sectorSize = int(wScreen/20)
-
-speedMax = 20
-timeStep = 0.01
-robotRadius = 6
-
-
 
  
 def main():
@@ -103,7 +90,7 @@ def main():
                 pygame.draw.line(screen,(255,0,0),rb.path[i]*sectorSize,rb.path[i+1]*sectorSize)
 
             rb.reachNodePath()
-            if( rb.indexPath < len(rb.path)-1):
+            if( rb.indexPath < len(rb.path)):
                 rb.move(speedMax)
             else:
                 rb.move(0)

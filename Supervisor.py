@@ -12,6 +12,9 @@ from enum import Enum
 
 
 
+
+#Map init
+ 
 wScreen = 800
 hScreen = 800
 numGridX = 20
@@ -22,10 +25,16 @@ speedMax = 20
 timeStep = 0.01
 robotRadius = 6
 
-##############
+############## State of the robot
 st_STOP = 0
 st_RUN = 1
 st_ASK = 2
+st_DONE = 3 # when it done the job
+
+########### level of priority
+num_level = 5
+
+
 
 
 def get_angle(vec):
@@ -52,12 +61,24 @@ class Supervisor:
             if(self.robots[idx].release_prevNode):
                self.MapToken[self.robots[idx].release_node()[0]][self.robots[idx].release_node()[1]] = -1       
     def ask_register(self):
-        for idx in range(len(self.robots)):
-         
+
+        list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots
+
+        for idx in range(len(self.robots)):    
             if self.robots[idx].state == st_ASK:
                 if self.MapToken[self.robots[idx].asking_node()[0]][self.robots[idx].asking_node()[1]] == -1:
-                    self.MapToken[self.robots[idx].asking_node()[0]][self.robots[idx].asking_node()[1]] = idx
-                    self.robots[idx].request_accepted()
+                    if [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]] in list_robot_ask:
+                        tmpIdx = list_robot_ask.index([self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]])
+                        if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                            list_robot_ask[tmpIdx] = list()
+                            list_robot_ask[idx] = [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]]
+                    else:
+                        list_robot_ask[idx] = [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]]
+
+        for idx in range(len(list_robot_ask)):
+            if len(list_robot_ask[idx]) > 0:
+                self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
+                self.robots[idx].request_accepted()        
             
 
 
@@ -83,9 +104,10 @@ class robot(object):
 
         self.release_prevNode = False
         self.path = []
- 
+
         self.indexPath = 1
         self.state = st_RUN
+        self.priority_level = 0
 
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
@@ -94,10 +116,16 @@ class robot(object):
     def release_node(self):
         return self.path[self.indexPath-1]
     def asking_node(self):
+        if ( self.indexPath == len(self.path)-1):
+            self.state = st_DONE
+            return self.path[self.indexPath]
         return self.path[self.indexPath+1]    
     def request_accepted(self):
-        self.state = st_RUN
-        self.indexPath += 1
+        if ( self.indexPath == len(self.path)-1):
+            self.state = st_DONE
+        else:
+            self.state =  st_RUN
+            self.indexPath += 1
 
 
     def move(self,speed):
@@ -120,9 +148,13 @@ class robot(object):
             self.y = vely*timeStep + self.y
 
 
+
+
         
 
     def reachNodePath(self):
+        # if( self.indexPath == len(self.path)-1):
+        #     self.state = st_DONE
         if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100):
             self.state = st_ASK
             
