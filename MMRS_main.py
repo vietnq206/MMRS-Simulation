@@ -12,19 +12,46 @@ def main():
     robots.append(robot(0,0,robotRadius,(255,111,222)))
     robots.append(robot(0,0,robotRadius,(143,111,124)))
     robots.append(robot(0,0,robotRadius,(123,235,222)))
+    robots.append(robot(0,0,robotRadius,(255,154,156)))
     robots.append(robot(0,0,robotRadius,(255,211,104)))
+    robots.append(robot(0,0,robotRadius,(141,211,104)))
+    robots.append(robot(0,0,robotRadius,(231,135,104)))
+    robots.append(robot(0,0,robotRadius,(125,211,175)))
+    robots.append(robot(0,0,robotRadius,(255,221,104)))
+    robots.append(robot(0,0,robotRadius,(122,156,197)))
+    robots.append(robot(0,0,robotRadius,(242,251,104)))
+    robots.append(robot(0,0,robotRadius,(255,211,124)))
+    robots.append(robot(0,0,robotRadius,(222,213,156)))
+    robots.append(robot(0,0,robotRadius,(215,124,221)))
+
+
+    robots.append(robot(0,0,robotRadius,(223,124,216)))
+    robots.append(robot(0,0,robotRadius,(234,124,221)))
+    robots.append(robot(0,0,robotRadius,(246,224,121)))
+    robots.append(robot(0,0,robotRadius,(215,124,134)))
+    robots.append(robot(0,0,robotRadius,(255,124,189)))
+
+
+
 
 
 
     #Obstacles initialize
     otc = list()
+
+    #Outport
     otc.append(obstacles(5,0,1,2,(255,0,0)))
     otc.append(obstacles(10,0,1,2,(255,0,0)))
     otc.append(obstacles(15,0,1,2,(255,0,0)))
+    #Start place
+    # otc.append(obstacles(0,11,3,1,(255,255,0)))
+    # otc.append(obstacles(19,11,3,1,(255,255,0)))
 
-    otc.append(obstacles(5,6,5,2,(152,152,152)))
-    otc.append(obstacles(10,6,5,2,(152,152,152)))
-    otc.append(obstacles(15,6,5,2,(152,152,152)))
+
+    #package shef
+    otc.append(obstacles(4,6,5,2,(152,152,152)))
+    otc.append(obstacles(9,6,5,2,(152,152,152)))
+    otc.append(obstacles(14,6,5,2,(152,152,152)))
     otc.append(obstacles(4,14,3,5,(152,152,152)))
     otc.append(obstacles(12,14,3,5,(152,152,152)))
 
@@ -39,9 +66,23 @@ def main():
                 access_nodes.append((row,col))
 
     
+    for i in range(8):
+       robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        .planning(1 ,1+i*2, 19, 19-i*2, access_nodes)) 
 
+    for i in range(8,15):
+        robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
-    #Path planning
+    for i in range(15,20):
+        robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
+
+    for i in range(15):
+        print("Robot: "+str(i))
+        print(robots[i].path)
+        print("------------")
+    # #Path planning
     robots[0].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
         .planning(16 ,19, 1, 1, access_nodes))
     robots[1].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
@@ -61,6 +102,9 @@ def main():
     run = True
 
     #Superviosr initialize
+
+
+
     supervisor = Supervisor(robots)
     supervisor.print_register_map()
 
@@ -68,9 +112,12 @@ def main():
     clock = pygame.time.Clock()
     while run:
         clock.tick(200)
+
+        supervisor.check_collision()
+        supervisor.release_register()
         supervisor.ask_register()
         # supervisor.print_register_map()
-        supervisor.release_register()
+        
         #
 
         #Scenario display
@@ -86,8 +133,8 @@ def main():
         #Robots processes
         for rb in robots:
             rb.draw(screen)
-            for i in range(len(rb.path)-1):
-                pygame.draw.line(screen,(255,0,0),rb.path[i]*sectorSize,rb.path[i+1]*sectorSize)
+            # for i in range(len(rb.path)-1):
+            #     pygame.draw.line(screen,(255,0,0),rb.path[i]*sectorSize,rb.path[i+1]*sectorSize)
 
             rb.reachNodePath()
             if( rb.indexPath < len(rb.path)):

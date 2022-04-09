@@ -6,7 +6,7 @@ import math
 import numpy as np
 from dijkstra_search import DijkstraSearch
 from pathPlaning import *
-
+import json
 from enum import Enum
 
 
@@ -51,15 +51,17 @@ class Supervisor:
     def __init__(self,robots):
         self.robots = robots
         self.MapToken = np.zeros( (numGridX,numGridY) , dtype=np.int64) - 1
-
-        for idx in range(len(robots)):
-            if self.MapToken[robots[idx].path[0][0]][robots[idx].path[0][1]] == -1:
-                self.MapToken[robots[idx].path[0][0]][robots[idx].path[0][1]] = idx
+        self.List_order = list()
+        for idx in range(len(self.robots)):
+            if self.MapToken[self.robots[idx].path[0][0]][self.robots[idx].path[0][1]] == -1:
+                self.MapToken[self.robots[idx].path[0][0]][self.robots[idx].path[0][1]] = idx
     
     def release_register(self):
         for idx in range(len(self.robots)):
-            if(self.robots[idx].release_prevNode):
-               self.MapToken[self.robots[idx].release_node()[0]][self.robots[idx].release_node()[1]] = -1       
+            if(self.robots[idx].release_prevNode == 1):
+               self.MapToken[self.robots[idx].release_node()[0]][self.robots[idx].release_node()[1]] = -1  
+               self.robots[idx].release_prevNode = 0     
+
     def ask_register(self):
 
         list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots
@@ -77,9 +79,28 @@ class Supervisor:
 
         for idx in range(len(list_robot_ask)):
             if len(list_robot_ask[idx]) > 0:
-                self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
-                self.robots[idx].request_accepted()        
-            
+                if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
+                    self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
+                    self.robots[idx].request_accepted()        
+                
+
+    def check_collision(self):
+        for i in range(len(self.robots)):
+            ack = 0
+            for j in range(len(self.robots)):
+                if i != j:
+                    if  np.sqrt((self.robots[i].x - self.robots[j].x)**2 + (self.robots[i].y - self.robots[j].y)**2 ) <= robotRadius:
+                        ack = 1
+                        self.robots[i].collision = True
+                        self.robots[j].collision = True
+            if ack == 0:
+                self.robots[i].collision = False
+                
+    def import_task(self,path):
+        with open(path, 'r') as f:
+            self.List_order = json.load(f)['Sheet1']
+
+    
 
 
     def print_register_map(self):
@@ -101,17 +122,20 @@ class robot(object):
         self.orient = 0
         self.radius = radius
         self.color = color
-
-        self.release_prevNode = False
+        self.collision = False
+        self.release_prevNode = -1
         self.path = []
 
-        self.indexPath = 1
-        self.state = st_RUN
+        self.indexPath = 0
+        self.state = st_ASK
         self.priority_level = 0
 
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
-        pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
+        if self.collision:
+            pygame.draw.circle(win, (255,0,0), (self.x,self.y), self.radius-1)
+        else:
+            pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
     
     def release_node(self):
         return self.path[self.indexPath-1]
@@ -127,17 +151,16 @@ class robot(object):
             self.state =  st_RUN
             self.indexPath += 1
 
+    def get_state(self):
+        return self.state
 
     def move(self,speed):
         if self.state == st_RUN:   
-            #Test if the robot has achived haft of the sector
+            #Test if the robot has achived  haft of the sector
             middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
             gap = sectorSize/14
-            if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) :
-                self.release_prevNode = True
-            else: 
-                self.release_prevNode = False
-              
+            if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) and self.release_prevNode == -1:
+                self.release_prevNode = 1                
 
             # runnign
             self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
@@ -155,7 +178,8 @@ class robot(object):
     def reachNodePath(self):
         # if( self.indexPath == len(self.path)-1):
         #     self.state = st_DONE
-        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100):
+        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100) and self.state == st_RUN:
+            self.release_prevNode = -1
             self.state = st_ASK
             
 
