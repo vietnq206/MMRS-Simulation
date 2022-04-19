@@ -2,6 +2,13 @@ from Supervisor import *
 
 
 
+import json
+from json import JSONEncoder
+class NumpyArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
  
 def main():
 
@@ -16,20 +23,20 @@ def main():
     robots.append(robot(0,0,robotRadius,(255,211,104)))
     robots.append(robot(0,0,robotRadius,(141,211,104)))
     robots.append(robot(0,0,robotRadius,(231,135,104)))
-    robots.append(robot(0,0,robotRadius,(125,211,175)))
-    robots.append(robot(0,0,robotRadius,(255,221,104)))
-    robots.append(robot(0,0,robotRadius,(122,156,197)))
-    robots.append(robot(0,0,robotRadius,(242,251,104)))
-    robots.append(robot(0,0,robotRadius,(255,211,124)))
-    robots.append(robot(0,0,robotRadius,(222,213,156)))
-    robots.append(robot(0,0,robotRadius,(215,124,221)))
+    # robots.append(robot(0,0,robotRadius,(125,211,175)))
+    # robots.append(robot(0,0,robotRadius,(255,221,104)))
+    # robots.append(robot(0,0,robotRadius,(122,156,197)))
+    # robots.append(robot(0,0,robotRadius,(242,251,104)))
+    # robots.append(robot(0,0,robotRadius,(255,211,124)))
+    # robots.append(robot(0,0,robotRadius,(222,213,156)))
+    # robots.append(robot(0,0,robotRadius,(215,124,221)))
 
 
-    robots.append(robot(0,0,robotRadius,(223,124,216)))
-    robots.append(robot(0,0,robotRadius,(234,124,221)))
-    robots.append(robot(0,0,robotRadius,(246,224,121)))
-    robots.append(robot(0,0,robotRadius,(215,124,134)))
-    robots.append(robot(0,0,robotRadius,(255,124,189)))
+    # robots.append(robot(0,0,robotRadius,(223,124,216)))
+    # robots.append(robot(0,0,robotRadius,(234,124,221)))
+    # robots.append(robot(0,0,robotRadius,(246,224,121)))
+    # robots.append(robot(0,0,robotRadius,(215,124,134)))
+    # robots.append(robot(0,0,robotRadius,(255,124,189)))
 
 
 
@@ -44,8 +51,8 @@ def main():
     otc.append(obstacles(10,0,1,2,(255,0,0)))
     otc.append(obstacles(15,0,1,2,(255,0,0)))
     #Start place
-    # otc.append(obstacles(0,11,3,1,(255,255,0)))
-    # otc.append(obstacles(19,11,3,1,(255,255,0)))
+    # otc.append(obstacles(0,11,0,14,(255,255,0)))
+    # otc.append(obstacles(19,11,0,14,(255,255,0)))
 
 
     #package shef
@@ -67,55 +74,81 @@ def main():
 
     
     for i in range(8):
-       robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(1 ,1+i*2, 19, 19-i*2, access_nodes)) 
+        robots[i].loc_node_x = 1
+        robots[i].loc_node_y = 1+i*2
+        # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        #     .planning(1 ,1+i*2, 19, 19-i*2, access_nodes)) 
 
-    for i in range(8,15):
-        robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
+    # for i in range(8,15):
+    #     robots[i].loc_node_x = 19
+    #     robots[i].loc_node_y = 2+(i-8)*2
 
-    for i in range(15,20):
-        robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
+    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
-    for i in range(15):
-        print("Robot: "+str(i))
-        print(robots[i].path)
-        print("------------")
+    # for i in range(15,20):
+    #     robots[i].loc_node_x = 4+(i-15)*2
+    #     robots[i].loc_node_y = 3
+    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     # .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
+
+    # for i in range(15):
+    #     print("Robot: "+str(i))
+    #     print(robots[i].path)
+    #     print("------------")
     # #Path planning
-    robots[0].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(16 ,19, 1, 1, access_nodes))
-    robots[1].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(1, 19, 18, 3, access_nodes))
-    robots[2].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(1, 4, 18, 6, access_nodes))
-    robots[3].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(18, 3, 4, 18, access_nodes))
-    robots[4].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-        .planning(2,6, 14, 10, access_nodes))    
+    # robots[0].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     .planning(16 ,19, 1, 1, access_nodes))
+    # robots[1].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     .planning(1, 19, 18, 3, access_nodes))
+    # robots[2].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     .planning(1, 4, 18, 6, access_nodes))
+    # robots[3].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     .planning(18, 3, 4, 18, access_nodes))
+    # robots[4].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    #     .planning(2,6, 14, 10, access_nodes))    
 
-    
-   
-    print("----------")
+
+    # loc_package_load = [[3,7],[3,10],[7,7],[7,10],[8,7],[8,10],[12,7],[12,10],[13,7],[13,10],[17,7],[17,10],[5,13],[8,13],[5,18],[8,18],[13,13],[16,13],[13,18],[16,18],[6,2],[11,2],[16,2]]
+    # array_load = np.zeros((len(loc_package_load),len(loc_package_load)))
+    # for i in range(len(loc_package_load)):
+    #     print("Doing for loc: "+ str(i))
+    #     for j in range(len(loc_package_load)):
+    #         print("      Apply for loc: "+ str(j))
+
+    #         if i !=j:
+    #             rx,ry = VisibilityRoadMap(robotRadius, do_plot=False).planning(loc_package_load[i][0],loc_package_load[i][1],\
+    #                                                                            loc_package_load[j][0],loc_package_load[j][1], access_nodes)
+    #             for k in range(len(rx)-1):
+    #                 array_load[i][j] += np.sqrt((rx[k+1]-rx[k])**2 + (ry[k+1]-ry[k])**2)
+                 
+    # numpyData = {"arrayOne": array_load}               
+
+    # with open("numpyData.json", "w") as write_file:
+    #     json.dump(numpyData, write_file, cls=NumpyArrayEncoder)
+
+
 
  
     run = True
 
     #Superviosr initialize
-
-
-
     supervisor = Supervisor(robots)
     supervisor.print_register_map()
 
+    print("Import tasl:")
+    supervisor.import_task( )
+    print("----------")
 
     clock = pygame.time.Clock()
+    c = 1
+    nhap = 1
     while run:
         clock.tick(200)
 
         supervisor.check_collision()
         supervisor.release_register()
-        supervisor.ask_register()
+        
         # supervisor.print_register_map()
         
         #
@@ -129,21 +162,40 @@ def main():
         for elm in otc :
             elm.draw(screen)
 
+        #Task assignment:
+        if nhap == 1:
+            for rb in range(len(robots)):
+            
+            # if robots[rb].get_state() in [st_DONE,st_STOP]:
+            
+                path = supervisor.generate_path(rb,access_nodes)
+                # print("Path generate of robot: " + str(rb))
+                # print(path)
+                # print("----------")
+                robots[rb].path = path
+                robots[rb].x = path[0][0]*sectorSize
+                robots[rb].y = path[0][1]*sectorSize              
 
+            input() 
+            nhap = 0
+
+        supervisor.ask_register()
         #Robots processes
-        for rb in robots:
-            rb.draw(screen)
-            # for i in range(len(rb.path)-1):
-            #     pygame.draw.line(screen,(255,0,0),rb.path[i]*sectorSize,rb.path[i+1]*sectorSize)
+        for rb in range(len(robots)):
+            # print("Robot: " + str(rb))
+            # print("location path:" + str(robots[rb].x/sectorSize) +"and loc y: "+str(robots[rb].y/sectorSize))
+            robots[rb].draw(screen)
+            for i in range(len(robots[rb].path)-1):
+                pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
 
-            rb.reachNodePath()
-            if( rb.indexPath < len(rb.path)):
-                rb.move(speedMax)
+            robots[rb].reachNodePath()
+            if( robots[rb].indexPath < len(robots[rb].path)):
+                robots[rb].move(speedMax)
             else:
-                rb.move(0)
-
-        pygame.display.update() 
+                robots[rb].move(0)
         
+        pygame.display.update() 
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

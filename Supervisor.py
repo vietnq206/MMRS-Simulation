@@ -8,7 +8,7 @@ from dijkstra_search import DijkstraSearch
 from pathPlaning import *
 import json
 from enum import Enum
-
+from readfile import *
 
 
 
@@ -34,8 +34,9 @@ st_DONE = 3 # when it done the job
 ########### level of priority
 num_level = 5
 
-
-
+########## Map infor
+G_loc_package_load = [[3,7],[3,10],[7,7],[7,10],[8,7],[8,10],[12,7],[12,10],[13,7],[13,10],[17,7],[17,10],[5,13],[8,13],[5,18],[8,18],[13,13],[16,13],[13,18],[16,18]]
+G_loc_outport = [[6,2],[11,2],[16,2]]
 
 def get_angle(vec):
     angle =  math.atan2(vec[1], vec[0])
@@ -51,10 +52,12 @@ class Supervisor:
     def __init__(self,robots):
         self.robots = robots
         self.MapToken = np.zeros( (numGridX,numGridY) , dtype=np.int64) - 1
+        self.Index_order = 0
         self.List_order = list()
+        self.Order_done = list()
         for idx in range(len(self.robots)):
-            if self.MapToken[self.robots[idx].path[0][0]][self.robots[idx].path[0][1]] == -1:
-                self.MapToken[self.robots[idx].path[0][0]][self.robots[idx].path[0][1]] = idx
+            if self.MapToken[self.robots[idx].loc_node_x][self.robots[idx].loc_node_y] == -1:
+                self.MapToken[self.robots[idx].loc_node_x][self.robots[idx].loc_node_y] = idx
     
     def release_register(self):
         for idx in range(len(self.robots)):
@@ -96,9 +99,40 @@ class Supervisor:
             if ack == 0:
                 self.robots[i].collision = False
                 
-    def import_task(self,path):
-        with open(path, 'r') as f:
-            self.List_order = json.load(f)['Sheet1']
+    def import_task(self):
+        self.List_order = list_task['task']
+        for elm in self.List_order:
+            elm['Done'] = 0
+
+ 
+
+    def generate_path(self,rbIdx,access_nodes):
+        node_seq = [[self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]]
+        o_path = list()
+        order = self.Index_order
+        for i in range(len(self.List_order[order]['Pack_list'])):
+            if(self.List_order[order]['Pack_list'][i] == '1'):
+                node_seq.append(G_loc_package_load[i])
+
+        if ( self.List_order[order]['Out_port'] == 'A'):
+            node_seq.append(G_loc_outport[0])
+        elif ( self.List_order[order]['Out_port'] == 'B'):
+            node_seq.append(G_loc_outport[1])
+        else:
+            node_seq.append(G_loc_outport[2])
+
+        o_path.append(np.array([node_seq[0][0],node_seq[0][1]]))
+        
+        for i in range(len(node_seq)-1):
+            rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], access_nodes)
+            for x,y in zip( rx,ry): 
+                if o_path[-1][0] != x or o_path[-1][1] != y: 
+                    o_path.append(np.array([x,y]))
+             
+
+        self.Index_order += 1
+        return o_path
 
     
 
