@@ -23,13 +23,16 @@ def main():
     robots.append(robot(0,0,robotRadius,(255,211,104)))
     robots.append(robot(0,0,robotRadius,(141,211,104)))
     robots.append(robot(0,0,robotRadius,(231,135,104)))
-    # robots.append(robot(0,0,robotRadius,(125,211,175)))
-    # robots.append(robot(0,0,robotRadius,(255,221,104)))
-    # robots.append(robot(0,0,robotRadius,(122,156,197)))
-    # robots.append(robot(0,0,robotRadius,(242,251,104)))
-    # robots.append(robot(0,0,robotRadius,(255,211,124)))
-    # robots.append(robot(0,0,robotRadius,(222,213,156)))
-    # robots.append(robot(0,0,robotRadius,(215,124,221)))
+
+
+
+    robots.append(robot(0,0,robotRadius,(125,211,175)))
+    robots.append(robot(0,0,robotRadius,(255,221,104)))
+    robots.append(robot(0,0,robotRadius,(122,156,197)))
+    robots.append(robot(0,0,robotRadius,(242,251,104)))
+    robots.append(robot(0,0,robotRadius,(255,211,124)))
+    robots.append(robot(0,0,robotRadius,(222,213,156)))
+    robots.append(robot(0,0,robotRadius,(215,124,221)))
 
 
     # robots.append(robot(0,0,robotRadius,(223,124,216)))
@@ -72,16 +75,22 @@ def main():
             if (row,col) not in otcs_nodes:
                 access_nodes.append((row,col))
 
-    
+    for row in range(0,numGridX-1):
+        for col in range(0,numGridY-1):
+            if (row+0.5,col+0.5) not in otcs_nodes:
+                access_nodes.append((row+0.5,col+0.5))
+
+
+
     for i in range(8):
         robots[i].loc_node_x = 1
         robots[i].loc_node_y = 1+i*2
         # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
         #     .planning(1 ,1+i*2, 19, 19-i*2, access_nodes)) 
 
-    # for i in range(8,15):
-    #     robots[i].loc_node_x = 19
-    #     robots[i].loc_node_y = 2+(i-8)*2
+    for i in range(8,15):
+        robots[i].loc_node_x = 19
+        robots[i].loc_node_y = 2+(i-8)*2
 
     #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
@@ -140,6 +149,12 @@ def main():
     supervisor.import_task( )
     print("----------")
 
+    
+
+
+
+
+
     clock = pygame.time.Clock()
     c = 1
     nhap = 1
@@ -161,32 +176,34 @@ def main():
             pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
         for elm in otc :
             elm.draw(screen)
-
+        # print("--------d--")
         #Task assignment:
         if nhap == 1:
             for rb in range(len(robots)):
             
             # if robots[rb].get_state() in [st_DONE,st_STOP]:
-            
-                path = supervisor.generate_path(rb,access_nodes)
+                
+
+
+                path = supervisor.gen_Path(rb,access_nodes,3)
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
-                # print("----------")
+                print("----------")
                 robots[rb].path = path
                 robots[rb].x = path[0][0]*sectorSize
                 robots[rb].y = path[0][1]*sectorSize              
 
             input() 
             nhap = 0
-
+        # print("--------dx--")
         supervisor.ask_register()
         #Robots processes
         for rb in range(len(robots)):
             # print("Robot: " + str(rb))
             # print("location path:" + str(robots[rb].x/sectorSize) +"and loc y: "+str(robots[rb].y/sectorSize))
             robots[rb].draw(screen)
-            for i in range(len(robots[rb].path)-1):
-                pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
+            # for i in range(len(robots[rb].path)-1):
+            #     pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
 
             robots[rb].reachNodePath()
             if( robots[rb].indexPath < len(robots[rb].path)):
