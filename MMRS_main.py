@@ -13,26 +13,27 @@ class NumpyArrayEncoder(JSONEncoder):
 def main():
 
     screen= pygame.display.set_mode((wScreen,hScreen))
-    #Robot initialize
+    #Robot initiali
+    # ze
     robots = list()
-    robots.append(robot(0,0,robotRadius,(255,255,222)))
-    robots.append(robot(0,0,robotRadius,(255,111,222)))
-    robots.append(robot(0,0,robotRadius,(143,111,124)))
-    robots.append(robot(0,0,robotRadius,(123,235,222)))
-    robots.append(robot(0,0,robotRadius,(255,154,156)))
-    robots.append(robot(0,0,robotRadius,(255,211,104)))
-    robots.append(robot(0,0,robotRadius,(141,211,104)))
-    robots.append(robot(0,0,robotRadius,(231,135,104)))
+    robots.append(robot(0,0,robotRadius,20,(255,255,222)))
+    robots.append(robot(0,0,robotRadius,20,(255,111,222)))
+    robots.append(robot(0,0,robotRadius,20,(143,111,124)))
+    robots.append(robot(0,0,robotRadius,20,(123,235,222)))
+    robots.append(robot(0,0,robotRadius,30,(255,154,156)))
+    robots.append(robot(0,0,robotRadius,30,(255,211,104)))
+    robots.append(robot(0,0,robotRadius,30,(141,211,104)))
+    robots.append(robot(0,0,robotRadius,30,(231,135,104)))
 
 
 
-    robots.append(robot(0,0,robotRadius,(125,211,175)))
-    robots.append(robot(0,0,robotRadius,(255,221,104)))
-    robots.append(robot(0,0,robotRadius,(122,156,197)))
-    robots.append(robot(0,0,robotRadius,(242,251,104)))
-    robots.append(robot(0,0,robotRadius,(255,211,124)))
-    robots.append(robot(0,0,robotRadius,(222,213,156)))
-    robots.append(robot(0,0,robotRadius,(215,124,221)))
+    robots.append(robot(0,0,robotRadius,30,(125,211,175)))
+    robots.append(robot(0,0,robotRadius,30,(255,221,104)))
+    robots.append(robot(0,0,robotRadius,25,(122,156,197)))
+    robots.append(robot(0,0,robotRadius,25,(242,251,104)))
+    robots.append(robot(0,0,robotRadius,25,(255,211,124)))
+    robots.append(robot(0,0,robotRadius,25,(222,213,156)))
+    robots.append(robot(0,0,robotRadius,25,(215,124,221)))
 
 
     # robots.append(robot(0,0,robotRadius,(223,124,216)))
@@ -207,9 +208,10 @@ def main():
 
             robots[rb].reachNodePath()
             if( robots[rb].indexPath < len(robots[rb].path)):
-                robots[rb].move(speedMax)
+                robots[rb].move()
             else:
-                robots[rb].move(0)
+                robots[rb].speed = 0
+                robots[rb].move()
         
         pygame.display.update() 
 

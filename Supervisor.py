@@ -219,12 +219,12 @@ class Supervisor:
 
     
 class robot(object):
-    def __init__(self,nodeX,nodeY,radius,color):
+    def __init__(self,nodeX,nodeY,radius,speed,color):
         self.loc_node_x = nodeX
         self.loc_node_y = nodeY
         self.x = nodeX*sectorSize
         self.y = nodeY*sectorSize
-        self.speed = 0
+        self.speed = speed
         self.orient = 0
         self.radius = radius
         self.color = color
@@ -263,7 +263,7 @@ class robot(object):
     def get_state(self):
         return self.state
 
-    def move(self,speed):
+    def move(self):
         if self.state == st_RUN:   
             #Test if the robot has achived  haft of the sector
             middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
@@ -278,7 +278,7 @@ class robot(object):
 
             # runnign
             self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
-            self.speed = speed
+            # self.speed = speed
             velx = math.cos(self.orient) * self.speed
             vely = math.sin(self.orient) * self.speed
             self.x = velx*timeStep + self.x 
