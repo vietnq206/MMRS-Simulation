@@ -23,7 +23,7 @@ sectorSize = int(wScreen/20)
 
 speedMax = 20
 timeStep = 0.01
-robotRadius = 6
+robotRadius = 5
 
 ############## State of the robot
 st_STOP = 0
@@ -65,20 +65,51 @@ class Supervisor:
                self.MapToken[self.robots[idx].release_node()[0]][self.robots[idx].release_node()[1]] = -1  
                self.robots[idx].release_prevNode = 0     
 
+    def deadlock_detection(self,rb):
+        # print("In"+str(rb))
+        i_node = self.robots[rb].node_deadlock()
+        i_rb = self.MapToken[i_node[0]][i_node[1]]
+        c = 0
+        while ( i_rb != -1 ):
+            # print("robot:"+str(i_rb))
+            if self.robots[i_rb].state == st_RUN and self.robots[i_rb].release_prevNode == -1 :
+                return True
+            if self.robots[i_rb].release_prevNode == 1:
+                n_node = self.robots[i_rb].node_deadlock()
+            else:
+                n_node = self.robots[i_rb].asking_node()
+            if n_node[0] == self.robots[rb].asking_node()[0] and n_node[1] == self.robots[rb].asking_node()[1]:
+                return False
+            i_rb = self.MapToken[n_node[0]][n_node[1]]
+            if rb == i_rb:
+                return True
+            c += 1
+            if c == 10:
+                input()
+        
+        return True
+
     def ask_register(self):
 
         list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots
-
+        
         for idx in range(len(self.robots)):    
-            if self.robots[idx].state == st_ASK:
-                if self.MapToken[self.robots[idx].asking_node()[0]][self.robots[idx].asking_node()[1]] == -1:
-                    if [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]] in list_robot_ask:
-                        tmpIdx = list_robot_ask.index([self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]])
-                        if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
-                            list_robot_ask[tmpIdx] = list()
+ 
+            # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].asking_node()[0])+","+str(self.robots[idx].asking_node()[1])\
+            #             +"] and next more node ["+ str(self.robots[idx].node_deadlock()[0])+","+str(self.robots[idx].node_deadlock()[1]) +"]")
+            if self.deadlock_detection(idx):    
+                if self.robots[idx].state == st_ASK:
+                    # print("Out")
+                    if self.MapToken[self.robots[idx].asking_node()[0]][self.robots[idx].asking_node()[1]] == -1:
+                        if [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]] in list_robot_ask:
+                            tmpIdx = list_robot_ask.index([self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]])
+                            if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                                list_robot_ask[tmpIdx] = list()
+                                list_robot_ask[idx] = [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]]
+                        else:
                             list_robot_ask[idx] = [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]]
-                    else:
-                        list_robot_ask[idx] = [self.robots[idx].asking_node()[0],self.robots[idx].asking_node()[1]]
+                         
+                                                                                                                   
 
         for idx in range(len(list_robot_ask)):
             if len(list_robot_ask[idx]) > 0:
@@ -89,7 +120,7 @@ class Supervisor:
 
     def check_collision(self):
         for i in range(len(self.robots)):
-            ack = 0
+            ack = 0      
             for j in range(len(self.robots)):
                 if i != j:
                     if  np.sqrt((self.robots[i].x - self.robots[j].x)**2 + (self.robots[i].y - self.robots[j].y)**2 ) <= robotRadius:
@@ -171,6 +202,9 @@ class robot(object):
         else:
             pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
     
+    def node_deadlock(self):
+        return self.path[self.indexPath+2]    
+
     def release_node(self):
         return self.path[self.indexPath-1]
     def asking_node(self):
