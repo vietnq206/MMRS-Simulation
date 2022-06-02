@@ -171,10 +171,20 @@ def main():
 
         #Scenario display
         screen.fill((255,255,255))
-        for i in range(numGridX):
-            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
-        for i in range(numGridY):
-            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
+        # for i in range(numGridX):
+        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
+        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (wScreen , hScreen-i*int((hScreen/numGridY))))
+        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (0 ,  i*int((hScreen/numGridY))))
+        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),hScreen), (wScreen ,  i*int((hScreen/numGridY))))
+        # for i in range(numGridY):
+        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
+        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen-i*int((wScreen/numGridX)),hScreen))
+        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), ( i*int((wScreen/numGridX)),0))
+
+
+
+
+
         for elm in otc :
             elm.draw(screen)
         # print("--------d--")

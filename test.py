@@ -1,16 +1,16 @@
-from pathPlaning import *
+# from pathPlaning import *
  
-import numpy as np
-import json
-robotRadius = 6
-numGridX = 20
-numGridY = 20
+# import numpy as np
+# import json
+# robotRadius = 6
+# numGridX = 20
+# numGridY = 20
  
 
-data = json.loads('task_list.json')
+# data = json.loads('task_list.json')
 
 
-# print( finalNumpyArrayOne)
+# # print( finalNumpyArrayOne)
 
  
 
@@ -48,3 +48,28 @@ data = json.loads('task_list.json')
 # print(rx)
 # print("----------")
 # print(ry)
+def direction(p1,p2):
+    if p1[0] == p2 [0]:
+        if p2[1] > p1[1]:
+            return 4
+        else:
+            return 0
+    if p2[1] == p1[1]:
+        if p2[0] > p1[1]:
+            return 6
+        else:
+            return 2
+    if p2[0] > p1[0]:
+        if p2[1] > p1[1]:
+            return 5
+        else:
+            return 7
+
+    if p2[0] < p1[0]:
+        if p2[1] > p1[1]:
+            return 3
+        else:
+            return 1
+
+
+print(direction([3,3],[4,3]))
