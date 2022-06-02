@@ -1,5 +1,7 @@
 
 
+from ast import While
+from msilib import Directory
 from turtle import width
 import pygame
 import math
@@ -38,8 +40,34 @@ num_level = 5
 G_loc_package_load = [[4,7],[4,10],[6,7],[6,10],[9,7],[9,10],[11,7],[11,10],[14,7],[14,10],[16,7],[16,10],[5,14],[8,14],[5,17],[8,17],[13,14],[16,14],[13,17],[16,17]]
 G_loc_outport = [[6,1],[11,1],[16,1]]
 
+def getList(dict):
+    tmp = set()
+    for elm in dict.keys():
+        tmp.add(elm)
+    return tmp
 
+def direction(p1,p2):
+    if p1[0] == p2 [0]:
+        if p2[1] > p1[1]:
+            return 4
+        else:
+            return 0
+    if p2[1] == p1[1]:
+        if p2[0] > p1[1]:
+            return 6
+        else:
+            return 2
+    if p2[0] > p1[0]:
+        if p2[1] > p1[1]:
+            return 5
+        else:
+            return 7
 
+    if p2[0] < p1[0]:
+        if p2[1] > p1[1]:
+            return 3
+        else:
+            return 1
 
 
 
@@ -64,6 +92,10 @@ class Supervisor:
         self.Index_order = 0
         self.List_order = list()
         self.Order_done = list()
+        self.robots_alloc = [list()]*numGridX*2 # using to manage priority of robots
+
+        self.dict_directRobots = dict()
+
         for idx in range(len(self.robots)):
             if self.MapToken[int(self.robots[idx].loc_node_x*2)][int(self.robots[idx].loc_node_y*2)] == -1:
                 self.MapToken[int(self.robots[idx].loc_node_x*2)][int(self.robots[idx].loc_node_y*2)] = idx
@@ -100,6 +132,31 @@ class Supervisor:
         
         return True
 
+    def checkTrap(self,path,rb):
+        TmpKey = str(path[0][0])+":"+str(path[0][1])     
+        setRb = getList(self.dict_directRobots[TmpKey])
+        setRb.remove(rb)
+        i = 1
+        while len(setRb)!=0:
+            direct = direction(path[i],path[i-1])
+            TmpKey = str(path[i][0])+":"+str(path[i][1])     
+            setRb = setRb.intersection(getList(self.dict_directRobots[TmpKey])) 
+            rmRb = set()
+            for elm in setRb:
+                if direct in self.dict_directRobots[TmpKey][elm] and self.MapToken[int(path[i][0]*2)][int(path[i][1]*2)] == elm:
+                    return False
+                if direct not in self.dict_directRobots[TmpKey][elm]:
+                    rmRb.add(elm)
+
+            if (len(rmRb)!=0):
+                for elm in rmRb:
+                    setRb.remove(elm)
+            i +=1
+
+        return True
+
+
+
     def ask_register(self):
 
         list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots
@@ -117,13 +174,17 @@ class Supervisor:
                     # print("State token: "+str(self.MapToken[askNodeX][askNodeY]))
                     # input()
                     if self.MapToken[askNodeX][askNodeY] == -1:
-                        if [askNodeX,askNodeY] in list_robot_ask:
-                            tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
-                            if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
-                                list_robot_ask[tmpIdx] = list()
+                        # keyMap = 
+                        unexe_nodes = self.robots[idx].unexe_nodes()
+                        if (self.checkTrap(unexe_nodes,idx)):
+
+                            if [askNodeX,askNodeY] in list_robot_ask:
+                                tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
+                                if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                                    list_robot_ask[tmpIdx] = list()
+                                    list_robot_ask[idx] = [askNodeX,askNodeY]
+                            else:
                                 list_robot_ask[idx] = [askNodeX,askNodeY]
-                        else:
-                            list_robot_ask[idx] = [askNodeX,askNodeY]
                          
                                                                                                                    
 
@@ -176,7 +237,8 @@ class Supervisor:
             for x,y in zip( rx,ry): 
                 if o_path[-1][0] != x or o_path[-1][1] != y: 
                     o_path.append(np.array([x,y]))
-             
+
+
 
         self.Index_order += 1
         return o_path
@@ -184,8 +246,9 @@ class Supervisor:
     
 
     def gen_Path(self,rbIdx,access_nodes,rep):
-        if ( self.Index_order == 10 ):
+        if ( self.Index_order == 10 ): #index to the task
             self.Index_order = 0
+
         node_seq = [[self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]]
         task = list_task_2['task'][self.Index_order]
         o_path = list()
@@ -203,8 +266,23 @@ class Supervisor:
                 if o_path[-1][0] != x or o_path[-1][1] != y: 
                     o_path.append(np.array([x,y]))
 
+        for i in range(len(o_path)-1):       #for deadlock avoidance
+            direct = direction(o_path[i],o_path[i+1])
+            key = str(o_path[i][0])+":"+str(o_path[i][1])
+            if key not in self.dict_directRobots:
+                self.dict_directRobots[key] = {rbIdx:[direct]}
+            else:
+                if rbIdx in self.dict_directRobots[key]:
+                    if direct not in self.dict_directRobots[key][rbIdx]:
+                        self.dict_directRobots[key][rbIdx].append(direct)
+                else:
+                    self.dict_directRobots[key][rbIdx] = [direct]
+                    
         for i in range(rep):
             o_path.extend(o_path[1:len(o_path)])
+
+        # for i in range(len(o_path)):
+
 
         return o_path
 
@@ -253,6 +331,10 @@ class robot(object):
             self.state = st_DONE
             return self.path[self.indexPath]
         return self.path[self.indexPath+1]    
+
+    def unexe_nodes(self):
+        return self.path[self.indexPath+1:len(self.path)] 
+    
     def request_accepted(self):
         if ( self.indexPath == len(self.path)-1):
             self.state = st_DONE
