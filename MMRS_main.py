@@ -82,6 +82,11 @@ def main():
                 access_nodes.append((row+0.5,col+0.5))
 
 
+    # for i in range(2):
+    #     robots[i].loc_node_x = 1
+    #     robots[i].loc_node_y = 1+i*2
+    #     # robots[i].pathAssign(VisibilityRoadM
+
 
     for i in range(8):
         robots[i].loc_node_x = 1
@@ -93,8 +98,8 @@ def main():
         robots[i].loc_node_x = 19
         robots[i].loc_node_y = 2+(i-8)*2
 
-    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-    #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
+        # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
     # for i in range(15,20):
     #     robots[i].loc_node_x = 4+(i-15)*2
@@ -171,15 +176,15 @@ def main():
 
         #Scenario display
         screen.fill((255,255,255))
-        # for i in range(numGridX):
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (wScreen , hScreen-i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (0 ,  i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),hScreen), (wScreen ,  i*int((hScreen/numGridY))))
-        # for i in range(numGridY):
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen-i*int((wScreen/numGridX)),hScreen))
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), ( i*int((wScreen/numGridX)),0))
+        for i in range(numGridX):
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (wScreen , hScreen-i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (0 ,  i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),hScreen), (wScreen ,  i*int((hScreen/numGridY))))
+        for i in range(numGridY):
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen-i*int((wScreen/numGridX)),hScreen))
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), ( i*int((wScreen/numGridX)),0))
 
 
 
