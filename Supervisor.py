@@ -13,7 +13,7 @@ from enum import Enum
 from readfile import *
 
 
-
+verSim = 1
 
 #Map init
  
@@ -70,6 +70,44 @@ def direction(p1,p2):
             return 1
 
 
+def list_compare(a,b):
+    a.sort()
+    b.sort()
+    if a == b:
+        return True
+    else:
+        return False
+def find_adj(a,b):
+    out = list()
+    if (a[0] - int(a[0]) == 0):
+        if (a[0],a[1]-1)  in b:
+            out.append([a[0],a[1]-1])
+
+        if (a[0],a[1]+1)  in b:
+            out.append([a[0],a[1]+1])
+
+        if (a[0]-1,a[1])  in b:
+            out.append([a[0]-1,a[1]])
+
+        if (a[0]+1,a[1])  in b:
+            out.append([a[0]+1,a[1]])
+
+    
+    if (a[0]-0.5,a[1]-0.5)  in b:
+        out.append([a[0]-0.5,a[1]-0.5])
+
+    if (a[0]+0.5,a[1]+0.5)  in b:
+        out.append([a[0]+0.5,a[1]+0.5])
+
+    if (a[0]-0.5,a[1]+0.5)  in b:
+        out.append([a[0]-0.5,a[1]+0.5])
+
+    if (a[0]+0.5,a[1]-0.5)  in b:
+        out.append([a[0]+0.5,a[1]-0.5])
+
+    return out
+
+
 
 
 
@@ -86,7 +124,8 @@ def get_angle(vec):
     return angle
 
 class Supervisor:
-    def __init__(self,robots):
+    def __init__(self,robots,access_nodes):
+        self.access_nodes = access_nodes
         self.robots = robots
         self.MapToken = np.zeros( (numGridX*2,numGridY*2) , dtype=np.int64) - 1
         self.Index_order = 0
@@ -132,6 +171,36 @@ class Supervisor:
         
         return True
 
+    def push_deadlock(self,rb): 
+        # print("In"+str(rb))
+        i_node = self.robots[rb].asking_node()
+        i_rb = self.MapToken[int(i_node[0]*2)][int(i_node[1]*2)]
+        # if i_rb == rb:
+        #     return True
+        c = 0
+        cyclic_deadlock = list()
+        cyclic_deadlock.append(rb)
+        while ( i_rb != -1 ):
+            # print("robot:"+str(i_rb))
+            cyclic_deadlock.append(i_rb)
+            if self.robots[i_rb].state == st_RUN and self.robots[i_rb].release_prevNode == -1 :
+                return list()
+            # if self.robots[i_rb].release_prevNode == 1:
+            #     n_node = self.robots[i_rb].node_deadlock()
+            # else:
+            #     n_node = self.robots[i_rb].asking_node()
+            n_node = self.robots[i_rb].asking_node()
+            if n_node[0] == self.robots[rb].asking_node()[0] and n_node[1] == self.robots[rb].asking_node()[1]:
+                return list()
+            i_rb = self.MapToken[int(n_node[0]*2)][int(n_node[1]*2)]
+            if rb == i_rb:
+                return cyclic_deadlock
+            c += 1
+            if c == 10:
+                input()
+        
+        return list()
+
     def checkTrap(self,path,rb):
         TmpKey = str(path[0][0])+":"+str(path[0][1])     
         setRb = getList(self.dict_directRobots[TmpKey])
@@ -158,42 +227,76 @@ class Supervisor:
 
 
     def ask_register(self):
+        list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots  
+        if verSim ==  0:
+            
+            for idx in range(len(self.robots)):    
+                # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].asking_node()[0])+","+str(self.robots[idx].asking_node()[1])\
+                #             +"] and next more node ["+ str(self.robots[idx].node_deadlock()[0])+","+str(self.robots[idx].node_deadlock()[1]) +"]")
+                if self.deadlock_detection(idx):   
+                    if self.robots[idx].state == st_ASK:
+                        
+                        askNodeX = int(self.robots[idx].asking_node()[0]*2)
+                        askNodeY = int(self.robots[idx].asking_node()[1]*2)
 
-        list_robot_ask = [list()]*len(self.robots) # using to manage priority of robots
-        
-        for idx in range(len(self.robots)):    
- 
-            # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].asking_node()[0])+","+str(self.robots[idx].asking_node()[1])\
-            #             +"] and next more node ["+ str(self.robots[idx].node_deadlock()[0])+","+str(self.robots[idx].node_deadlock()[1]) +"]")
-            if self.deadlock_detection(idx): 
-                # print("Out")   
+                        if self.MapToken[askNodeX][askNodeY] == -1:
+
+                            unexe_nodes = self.robots[idx].unexe_nodes()
+                            if (self.checkTrap(unexe_nodes,idx)):
+
+                                if [askNodeX,askNodeY] in list_robot_ask:
+                                    tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
+                                    if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                                        list_robot_ask[tmpIdx] = list()
+                                        list_robot_ask[idx] = [askNodeX,askNodeY]
+                                else:
+                                    list_robot_ask[idx] = [askNodeX,askNodeY]                                                                                                                              
+            for idx in range(len(list_robot_ask)):
+                if len(list_robot_ask[idx]) > 0:
+                    if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
+                        self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
+                        self.robots[idx].request_accepted()        
+
+        if verSim == 1:
+            for idx in range(len(self.robots)):    
                 if self.robots[idx].state == st_ASK:
                     
                     askNodeX = int(self.robots[idx].asking_node()[0]*2)
                     askNodeY = int(self.robots[idx].asking_node()[1]*2)
-                    # print("State token: "+str(self.MapToken[askNodeX][askNodeY]))
-                    # input()
                     if self.MapToken[askNodeX][askNodeY] == -1:
-                        # keyMap = 
-                        unexe_nodes = self.robots[idx].unexe_nodes()
-                        if (self.checkTrap(unexe_nodes,idx)):
-
-                            if [askNodeX,askNodeY] in list_robot_ask:
-                                tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
-                                if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
-                                    list_robot_ask[tmpIdx] = list()
-                                    list_robot_ask[idx] = [askNodeX,askNodeY]
-                            else:
+                        if [askNodeX,askNodeY] in list_robot_ask:
+                            tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
+                            if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                                list_robot_ask[tmpIdx] = list()
                                 list_robot_ask[idx] = [askNodeX,askNodeY]
-                         
-                                                                                                                   
+                        else:
+                            list_robot_ask[idx] = [askNodeX,askNodeY]
+                            
+                                                                                                                    
+            assigned_rb = list()
+            for idx in range(len(list_robot_ask)):
+                if len(list_robot_ask[idx]) > 0:
+                    if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
+                        self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
+                        assigned_rb.append(idx)
+                        self.robots[idx].request_accepted()  
 
-        for idx in range(len(list_robot_ask)):
-            if len(list_robot_ask[idx]) > 0:
-                if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
-                    self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
-                    self.robots[idx].request_accepted()        
-                
+            flag = 0
+            for idx in range(len(self.robots)):
+                if self.robots[idx].state == st_ASK and flag == 0:
+                    cyc = self.push_deadlock(idx)
+                    if len(cyc) != 0:
+                        # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                        adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
+                        for elm in adj:
+                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1:
+                                # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                                self.robots[idx].path.insert(self.robots[idx].indexPath+1, self.robots[idx].curr_node())
+                                self.robots[idx].path.insert(self.robots[idx].indexPath+1,np.array([elm[0],elm[1]]))
+                                self.MapToken[int(elm[0])*2][int(elm[1])*2] = idx
+                                self.robots[idx].request_accepted() 
+                                flag = 1
+                                break                        
 
     def check_collision(self):
         for i in range(len(self.robots)):
@@ -214,7 +317,7 @@ class Supervisor:
 
  
 
-    def generate_path(self,rbIdx,access_nodes):
+    def generate_path(self,rbIdx):
         node_seq = [[self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]]
         o_path = list()
         order = self.Index_order
@@ -233,7 +336,7 @@ class Supervisor:
         
         for i in range(len(node_seq)-1):
             rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
-                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], access_nodes)
+                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], self.access_nodes)
             for x,y in zip( rx,ry): 
                 if o_path[-1][0] != x or o_path[-1][1] != y: 
                     o_path.append(np.array([x,y]))
@@ -245,7 +348,7 @@ class Supervisor:
 
     
 
-    def gen_Path(self,rbIdx,access_nodes,rep):
+    def gen_Path(self,rbIdx,rep):
         if ( self.Index_order == 10 ): #index to the task
             self.Index_order = 0
 
@@ -261,7 +364,7 @@ class Supervisor:
         o_path.append(np.array([node_seq[0][0],node_seq[0][1]]))
         for i in range(len(node_seq)-1):
             rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
-                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], access_nodes)
+                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], self.access_nodes)
             for x,y in zip( rx,ry): 
                 if o_path[-1][0] != x or o_path[-1][1] != y: 
                     o_path.append(np.array([x,y]))
@@ -323,7 +426,8 @@ class robot(object):
     
     def node_deadlock(self):
         return self.path[self.indexPath+2]    
-
+    def curr_node(self):
+        return self.path[self.indexPath] 
     def release_node(self):
         return self.path[self.indexPath-1]
     def asking_node(self):
@@ -425,10 +529,6 @@ class obstacles:
         for row in range(x,x+width):
             for col in range(y, y +  heigh ):
                 self.nodes.append((row+0.5,col+0.5))
-
-
-        # self.vertexX = x*sectorSize + 2*robotRadius
-        # self.vertexY = y*sectorSize + 2*robotRadius
 
 
     def draw(self,screen):
