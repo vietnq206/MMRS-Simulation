@@ -94,7 +94,7 @@ def main():
         robots[i].loc_node_x = 19
         robots[i].loc_node_y = 2+(i-8)*2
 
-    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
     # for i in range(15,20):
@@ -144,7 +144,7 @@ def main():
     run = True
 
     #Superviosr initialize
-    supervisor = Supervisor(robots)
+    supervisor = Supervisor(robots,access_nodes)
     supervisor.print_register_map()
 
     print("Import tasl:")
@@ -172,15 +172,15 @@ def main():
 
         #Scenario display
         screen.fill((255,255,255))
-        # for i in range(numGridX):
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (wScreen , hScreen-i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (0 ,  i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),hScreen), (wScreen ,  i*int((hScreen/numGridY))))
-        # for i in range(numGridY):
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen-i*int((wScreen/numGridX)),hScreen))
-        #     pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), ( i*int((wScreen/numGridX)),0))
+        for i in range(numGridX):
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (i*int((wScreen/numGridX)),hScreen))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (wScreen , hScreen-i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),0), (0 ,  i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(i*int((wScreen/numGridX)),hScreen), (wScreen ,  i*int((hScreen/numGridY))))
+        for i in range(numGridY):
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen , i*int((hScreen/numGridY))))
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), (wScreen-i*int((wScreen/numGridX)),hScreen))
+            pygame.draw.line(screen, (224,224,224),(0,i*int((hScreen/numGridY))), ( i*int((wScreen/numGridX)),0))
 
 
 
@@ -197,7 +197,7 @@ def main():
                 
 
 
-                path = supervisor.gen_Path(rb,access_nodes,3)
+                path = supervisor.gen_Path(rb,3)
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
                 print("----------")
