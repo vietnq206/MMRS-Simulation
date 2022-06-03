@@ -33,6 +33,7 @@ def main():
     robots.append(robot(0,0,robotRadius,25,(242,251,104)))
     robots.append(robot(0,0,robotRadius,25,(255,211,124)))
     robots.append(robot(0,0,robotRadius,25,(222,213,156)))
+    
     robots.append(robot(0,0,robotRadius,25,(215,124,221)))
 
 
