@@ -25,7 +25,7 @@ sectorSize = int(wScreen/20)
 
 speedMax = 20
 timeStep = 0.01
-robotRadius = 7
+robotRadius = 5
 
 ############## State of the robot
 st_STOP = 0
@@ -286,7 +286,7 @@ class Supervisor:
                 if self.robots[idx].state == st_ASK and flag == 0:
                     cyc = self.push_deadlock(idx)
                     if len(cyc) != 0:
-                        # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                        print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
                             if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1:
