@@ -197,7 +197,7 @@ def main():
                 
 
 
-                path = supervisor.gen_Path(rb,3)
+                path = supervisor.gen_Path(rb,1)
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
                 print("----------")
@@ -216,6 +216,20 @@ def main():
             robots[rb].draw(screen)
             # for i in range(len(robots[rb].path)-1):
             #     pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
+
+            if robots[rb].tmpVal[0] - robots[rb].x == 0 and robots[rb].tmpVal[1] - robots[rb].y == 0 :
+                robots[rb].count += 1
+            else: 
+                robots[rb].count = 0
+                robots[rb].tmpVal = np.array([robots[rb].x,robots[rb].y])
+
+
+            if robots[rb].count == 500:
+                print("Robot in " + str(rb))
+                print((robots[rb].path[robots[rb].indexPath]))
+                supervisor.print_register_map()
+                input()
+
 
             robots[rb].reachNodePath()
             if( robots[rb].indexPath < len(robots[rb].path)):

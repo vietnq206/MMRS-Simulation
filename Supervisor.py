@@ -25,7 +25,7 @@ sectorSize = int(wScreen/20)
 
 speedMax = 20
 timeStep = 0.01
-robotRadius = 7
+robotRadius = 6
 
 ############## State of the robot
 st_STOP = 0
@@ -164,7 +164,10 @@ class Supervisor:
             if rb == i_rb:
                 return cyclic_deadlock
             c += 1
-            if c == 10:
+            if c == 30:
+                return list()
+                print("in deadlock cycle: Robot "+str(rb))
+                print(cyclic_deadlock)
                 input()
         
         return list()
@@ -200,8 +203,8 @@ class Supervisor:
       
         for idx in range(len(self.robots)):    
  
-            # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].asking_node()[0])+","+str(self.robots[idx].asking_node()[1])\
-            #             +"] and next more node ["+ str(self.robots[idx].node_deadlock()[0])+","+str(self.robots[idx].node_deadlock()[1]) +"]")
+            print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].asking_node()[0])+","+str(self.robots[idx].asking_node()[1])\
+                        +"] and next more node ["+ str(self.robots[idx].node_deadlock()[0])+","+str(self.robots[idx].node_deadlock()[1]) +"]")
         
                 # print("Out")   
             if self.robots[idx].state == st_ASK:
@@ -369,9 +372,9 @@ class Supervisor:
 
     def print_register_map(self):
         print("Map all:")
-        for i in range(numGridX):
+        for i in range(numGridX*2):
             s = ""
-            for j in range(numGridY):
+            for j in range(numGridY*2):
                 s = s + str(self.MapToken[i][j]) +" "
             print(s)
 
@@ -394,6 +397,9 @@ class robot(object):
         self.state = st_ASK
         self.priority_level = 0
 
+        self.tmpVal = np.array([0,0])
+        self.count = 0
+
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
         if self.collision:
@@ -402,6 +408,10 @@ class robot(object):
             pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
     
     def node_deadlock(self):
+        if ( self.indexPath == len(self.path)-2):
+            self.state = st_DONE
+            return self.path[self.indexPath]
+
         return self.path[self.indexPath+2]    
 
     def curr_node(self):
@@ -429,6 +439,19 @@ class robot(object):
         return self.state
 
     def move(self):
+
+        # if self.tmpVal[0] - self.x == 0 and self.tmpVal[1] - self.y == 0 :
+        #     self.count += 1
+        # else: 
+        #     self.count = 0
+        #     self.tmpVal = np.array([self.x,self.y])
+
+        
+        # if self.count == 500:
+        #     print("Robot in ")
+        #     print((self.path[self.indexPath]))
+        #     input()
+        
         if self.state == st_RUN:   
             #Test if the robot has achived  haft of the sector
             middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
