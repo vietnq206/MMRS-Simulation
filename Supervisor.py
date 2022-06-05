@@ -25,7 +25,7 @@ sectorSize = int(wScreen/20)
 
 speedMax = 20
 timeStep = 0.01
-robotRadius = 5
+robotRadius = 6
 
 ############## State of the robot
 st_STOP = 0
@@ -237,6 +237,8 @@ class Supervisor:
                 if direct not in self.dict_directRobots[TmpKey][elm]:
                     rmRb.add(elm)
 
+
+            
             if (len(rmRb)!=0):
                 for elm in rmRb:
                     setRb.remove(elm)
@@ -323,10 +325,8 @@ class Supervisor:
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1, self.robots[idx].curr_node())
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1,np.array([elm[0],elm[1]]))
                                 self.MapToken[int(elm[0])*2][int(elm[1])*2] = idx
-                                # if idx == 12:
-                                    # print("2")
-                                    # print(cyc)
-                                    # input()
+                                self.robots[idx].spotlight = True
+                                self.robots[idx].countPush += 1
                                 self.robots[idx].request_accepted() 
                                 flag = 1
                                 break                        
@@ -450,6 +450,8 @@ class robot(object):
         self.state = st_ASK
         self.priority_level = 0
 
+        self.countPush = 0
+
         self.task = list()
         self.indexTask = -1
 
@@ -527,6 +529,10 @@ class robot(object):
         if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100) and self.state == st_RUN:
             self.release_prevNode = -1
             self.state = st_ASK
+            if self.countPush != 0:
+                self.countPush -= 1
+            else: 
+                self.spotlight = False
             
 
     def hitBoundaries(self):

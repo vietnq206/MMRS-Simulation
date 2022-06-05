@@ -101,25 +101,29 @@ class VisibilityRoadMap:
             possible_reach_nodes.append((target_node.x + 0.5,target_node.y - 0.5)) 
 
 
-            # if(target_node.x % 2 == 1):
-            #     possible_reach_nodes.append((target_node.x,target_node.y + 1)) 
-            # else:
-            #     possible_reach_nodes.append((target_node.x,target_node.y - 1)) 
 
-            # if(target_node.y % 2 == 0):
-            #     possible_reach_nodes.append((target_node.x +1 ,target_node.y)) 
-            # else:
-            #     possible_reach_nodes.append((target_node.x -1,target_node.y)) 
+
+            # if target_node.x - int(target_node.x) == 0:
+
+            #     if(target_node.x % 2 == 1):
+            #         possible_reach_nodes.append((target_node.x,target_node.y + 1)) 
+            #     else:
+            #         possible_reach_nodes.append((target_node.x,target_node.y - 1)) 
+
+            #     if(target_node.y % 2 == 0):
+            #         possible_reach_nodes.append((target_node.x +1 ,target_node.y)) 
+            #     else:
+            #         possible_reach_nodes.append((target_node.x -1,target_node.y)) 
 
             # if ( np.abs(target_node.y - target_node.x) % 4 == 0):
-            #     possible_reach_nodes.append((target_node.x + 1,target_node.y + 1))
+            #     possible_reach_nodes.append((target_node.x + 0.5,target_node.y + 0.5))
             # elif ( np.abs(target_node.y - target_node.x) % 4 == 2):
-            #     possible_reach_nodes.append((target_node.x - 1,target_node.y - 1))
+            #     possible_reach_nodes.append((target_node.x - 0.5,target_node.y - 0.5))
 
             # if ( np.abs(target_node.y + target_node.x) % 4 == 0):
-            #     possible_reach_nodes.append((target_node.x - 1,target_node.y + 1))
+            #     possible_reach_nodes.append((target_node.x - 0.5,target_node.y + 0.5))
             # elif ( np.abs(target_node.y + target_node.x) % 4 == 2):
-            #     possible_reach_nodes.append((target_node.x + 1,target_node.y - 1))
+            #     possible_reach_nodes.append((target_node.x + 0.5,target_node.y - 0.5))
 
 
 

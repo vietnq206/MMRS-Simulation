@@ -16,26 +16,26 @@ def main():
     #Robot initiali
     # ze
     robots = list()
-    robots.append(robot(0,0,robotRadius,20,(255,255,222)))
-    robots.append(robot(0,0,robotRadius,20,(255,111,222)))
-    robots.append(robot(0,0,robotRadius,20,(143,111,124)))
-    robots.append(robot(0,0,robotRadius,20,(123,235,222)))
-    robots.append(robot(0,0,robotRadius,30,(255,154,156)))
-    robots.append(robot(0,0,robotRadius,30,(255,211,104)))
-    robots.append(robot(0,0,robotRadius,30,(141,211,104)))
-    robots.append(robot(0,0,robotRadius,30,(231,135,104)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+ 
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,30,(0,0,255)))
+ 
 
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
 
-
-    robots.append(robot(0,0,robotRadius,30,(125,211,175)))
-    robots.append(robot(0,0,robotRadius,30,(255,221,104)))
-    robots.append(robot(0,0,robotRadius,25,(122,156,197)))
-    robots.append(robot(0,0,robotRadius,25,(242,251,104)))
-    robots.append(robot(0,0,robotRadius,25,(255,211,124)))
-    robots.append(robot(0,0,robotRadius,25,(222,213,156)))
-    
-    robots.append(robot(0,0,robotRadius,25,(215,124,221)))
-
+ 
 
     # robots.append(robot(0,0,robotRadius,25,(223,124,216)))
     # robots.append(robot(0,0,robotRadius,25,(234,124,221)))
@@ -161,7 +161,10 @@ def main():
     clock = pygame.time.Clock()
     c = 1
     nhap = 1
+    runTime = 0
     while run:
+        runTime += 1
+        print(runTime)
         clock.tick(200)
 
         supervisor.check_collision()
@@ -198,7 +201,7 @@ def main():
                 
 
 
-                path = supervisor.gen_Path(rb,3)
+                path = supervisor.gen_Path(rb,0)
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
                 print("----------")
@@ -215,9 +218,9 @@ def main():
             # print("Robot: " + str(rb))
             # print("location path:" + str(robots[rb].x/sectorSize) +"and loc y: "+str(robots[rb].y/sectorSize))
             robots[rb].draw(screen)
-            if rb == 12:
-                for i in range(len(robots[rb].path)-1):
-                    pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
+            # if rb == 12:
+            #     for i in range(len(robots[rb].path)-1):
+            #         pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
 
             robots[rb].reachNodePath()
             if( robots[rb].indexPath < len(robots[rb].path)):
