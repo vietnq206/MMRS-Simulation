@@ -48,28 +48,32 @@
 # print(rx)
 # print("----------")
 # print(ry)
-def direction(p1,p2):
-    if p1[0] == p2 [0]:
-        if p2[1] > p1[1]:
-            return 4
-        else:
-            return 0
-    if p2[1] == p1[1]:
-        if p2[0] > p1[1]:
-            return 6
-        else:
-            return 2
-    if p2[0] > p1[0]:
-        if p2[1] > p1[1]:
-            return 5
-        else:
-            return 7
+# def direction(p1,p2):
+#     if p1[0] == p2 [0]:
+#         if p2[1] > p1[1]:
+#             return 4
+#         else:
+#             return 0
+#     if p2[1] == p1[1]:
+#         if p2[0] > p1[1]:
+#             return 6
+#         else:
+#             return 2
+#     if p2[0] > p1[0]:
+#         if p2[1] > p1[1]:
+#             return 5
+#         else:
+#             return 7
 
-    if p2[0] < p1[0]:
-        if p2[1] > p1[1]:
-            return 3
-        else:
-            return 1
+#     if p2[0] < p1[0]:
+#         if p2[1] > p1[1]:
+#             return 3
+#         else:
+#             return 1
 
 
-print(direction([3,3],[4,3]))
+# print(direction([3,3],[4,3]))
+
+
+
+

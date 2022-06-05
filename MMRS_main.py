@@ -37,11 +37,11 @@ def main():
     robots.append(robot(0,0,robotRadius,25,(215,124,221)))
 
 
-    # robots.append(robot(0,0,robotRadius,(223,124,216)))
-    # robots.append(robot(0,0,robotRadius,(234,124,221)))
-    # robots.append(robot(0,0,robotRadius,(246,224,121)))
-    # robots.append(robot(0,0,robotRadius,(215,124,134)))
-    # robots.append(robot(0,0,robotRadius,(255,124,189)))
+    # robots.append(robot(0,0,robotRadius,25,(223,124,216)))
+    # robots.append(robot(0,0,robotRadius,25,(234,124,221)))
+    # robots.append(robot(0,0,robotRadius,25,(246,224,121)))
+    # robots.append(robot(0,0,robotRadius,25,(215,124,134)))
+    # robots.append(robot(0,0,robotRadius,25,(255,124,189)))
 
 
 
@@ -93,15 +93,16 @@ def main():
     for i in range(8,15):
         robots[i].loc_node_x = 19
         robots[i].loc_node_y = 2+(i-8)*2
-
+    robots[12].spotlight = True
     #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
     # for i in range(15,20):
     #     robots[i].loc_node_x = 4+(i-15)*2
     #     robots[i].loc_node_y = 3
-    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
-    #     # .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
+
+        # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+        # .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
 
     # for i in range(15):
     #     print("Robot: "+str(i))
@@ -214,8 +215,9 @@ def main():
             # print("Robot: " + str(rb))
             # print("location path:" + str(robots[rb].x/sectorSize) +"and loc y: "+str(robots[rb].y/sectorSize))
             robots[rb].draw(screen)
-            # for i in range(len(robots[rb].path)-1):
-            #     pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
+            if rb == 12:
+                for i in range(len(robots[rb].path)-1):
+                    pygame.draw.line(screen,(255,0,0),robots[rb].path[i]*sectorSize,robots[rb].path[i+1]*sectorSize)
 
             robots[rb].reachNodePath()
             if( robots[rb].indexPath < len(robots[rb].path)):
