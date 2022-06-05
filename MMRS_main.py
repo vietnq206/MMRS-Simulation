@@ -18,23 +18,23 @@ def main():
     robots = list()
     robots.append(robot(0,0,robotRadius,20,(255,255,222)))
     robots.append(robot(0,0,robotRadius,20,(255,111,222)))
-    robots.append(robot(0,0,robotRadius,20,(143,111,124)))
-    robots.append(robot(0,0,robotRadius,20,(123,235,222)))
-    robots.append(robot(0,0,robotRadius,30,(255,154,156)))
-    robots.append(robot(0,0,robotRadius,30,(255,211,104)))
-    robots.append(robot(0,0,robotRadius,30,(141,211,104)))
-    robots.append(robot(0,0,robotRadius,30,(231,135,104)))
+    # robots.append(robot(0,0,robotRadius,20,(143,111,124)))
+    # robots.append(robot(0,0,robotRadius,20,(123,235,222)))
+    # robots.append(robot(0,0,robotRadius,30,(255,154,156)))
+    # robots.append(robot(0,0,robotRadius,30,(255,211,104)))
+    # robots.append(robot(0,0,robotRadius,30,(141,211,104)))
+    # robots.append(robot(0,0,robotRadius,30,(231,135,104)))
 
 
 
-    robots.append(robot(0,0,robotRadius,30,(125,211,175)))
-    robots.append(robot(0,0,robotRadius,30,(255,221,104)))
-    robots.append(robot(0,0,robotRadius,25,(122,156,197)))
-    robots.append(robot(0,0,robotRadius,25,(242,251,104)))
-    robots.append(robot(0,0,robotRadius,25,(255,211,124)))
-    robots.append(robot(0,0,robotRadius,25,(222,213,156)))
+    # robots.append(robot(0,0,robotRadius,30,(125,211,175)))
+    # robots.append(robot(0,0,robotRadius,30,(255,221,104)))
+    # robots.append(robot(0,0,robotRadius,25,(122,156,197)))
+    # robots.append(robot(0,0,robotRadius,25,(242,251,104)))
+    # robots.append(robot(0,0,robotRadius,25,(255,211,124)))
+    # robots.append(robot(0,0,robotRadius,25,(222,213,156)))
     
-    robots.append(robot(0,0,robotRadius,25,(215,124,221)))
+    # robots.append(robot(0,0,robotRadius,25,(215,124,221)))
 
 
     # robots.append(robot(0,0,robotRadius,25,(223,124,216)))
@@ -84,17 +84,17 @@ def main():
 
 
 
-    for i in range(8):
+    for i in range(2):
         robots[i].loc_node_x = 1
         robots[i].loc_node_y = 1+i*2
         # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
         #     .planning(1 ,1+i*2, 19, 19-i*2, access_nodes)) 
 
-    for i in range(8,15):
-        robots[i].loc_node_x = 19
-        robots[i].loc_node_y = 2+(i-8)*2
-    robots[12].spotlight = True
-    #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
+    # for i in range(8,15):
+    #     robots[i].loc_node_x = 19
+    #     robots[i].loc_node_y = 2+(i-8)*2
+    # robots[12].spotlight = True
+    # #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
     # for i in range(15,20):
@@ -195,16 +195,16 @@ def main():
             for rb in range(len(robots)):
             
             # if robots[rb].get_state() in [st_DONE,st_STOP]:
-                
+                supervisor.generate_path_sigle(rb)
 
 
-                path = supervisor.gen_Path(rb,3)
+                # path = supervisor.gen_Path(rb,3)
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
                 print("----------")
-                robots[rb].path = path
-                robots[rb].x = path[0][0]*sectorSize
-                robots[rb].y = path[0][1]*sectorSize              
+                robots[rb].init_path(access_nodes)
+                robots[rb].x = robots[rb].path[0][0]*sectorSize
+                robots[rb].y = robots[rb].path[0][1]*sectorSize              
 
             input() 
             nhap = 0

@@ -360,7 +360,8 @@ class Supervisor:
                 node_seq.append(G_loc_package_load[elm])
             node_seq.append(G_loc_outport[task['port']])
             self.robots[rbIdx].task = node_seq
-              
+            self.Index_order += 1
+
 
 
     # if self.robots[rbIdx].state == st_WAIT:
@@ -444,12 +445,12 @@ class robot(object):
         self.color = color
         self.collision = False
         self.release_prevNode = -1
-        self.path = []
+        self.path = list()
         self.spotlight = False
         self.indexPath = 0
         self.state = st_ASK
         self.priority_level = 0
-
+        self.access_nodes = list()
         self.task = list()
         self.indexTask = -1
 
@@ -464,6 +465,17 @@ class robot(object):
                 else:
                     pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
     
+
+    def init_path(self,access_nodes):
+        rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+                                    .planning(self.loc_node_x ,self.loc_node_y, self.task[0][0], self.task[0][1], access_nodes)       
+        for x,y in zip( rx,ry): 
+            # if o_path[-1][0] != x or o_path[-1][1] != y: 
+            self.path.append(np.array([x,y]))
+        self.indexTask+=1
+        self.access_nodes = access_nodes
+   
+   
     def node_deadlock(self):
         if ( self.indexPath == len(self.path)-2):   
             self.state = st_DONE
@@ -477,10 +489,38 @@ class robot(object):
     def release_node(self):
         return self.path[self.indexPath-1]
     def asking_node(self):
+
+        print(self.indexPath)
+        # print("len path "+str(len*))
+        
         if ( self.indexPath == len(self.path)-1):
-            self.state = st_DONE
-            return self.path[self.indexPath]
-        return self.path[self.indexPath+1]    
+            print("request! ")
+            if self.indexTask < len(self.task)-1:
+                rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+                                                    .planning(self.task[self.indexTask][0] ,self.task[self.indexTask][1], self.task[self.indexTask+1][0] ,self.task[self.indexTask+1][1],self.access_nodes)       
+                self.indexTask +=1
+                self.path = list()
+                self.indexPath = 0
+                for x,y in zip( rx,ry): 
+                    self.path.append(np.array([x,y]))                
+                
+                self.indexPath += 1
+                return self.path[self.indexPath]
+            else: 
+                self.state = st_DONE
+                return self.path[self.indexPath]
+
+        return self.path[self.indexPath+1]   
+
+
+        # if ( self.indexPath == len(self.path)-1):
+        #     # if self.indexTask == len(self.task)
+        #     # self.state = st_DONE
+
+
+
+        #     return self.path[self.indexPath]
+        # return self.path[self.indexPath+1]    
 
     def unexe_nodes(self):
         return self.path[self.indexPath+1:len(self.path)] 
