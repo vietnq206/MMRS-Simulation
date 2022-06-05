@@ -30,6 +30,7 @@ robotRadius = 6
 ############## State of the robot
 st_STOP = 0
 st_RUN = 1
+st_preASK = 5
 st_ASK = 2
 st_DONE = 3 
 st_WAIT = 4
@@ -260,6 +261,8 @@ class Supervisor:
                         
                         askNodeX = int(self.robots[idx].asking_node()[0]*2)
                         askNodeY = int(self.robots[idx].asking_node()[1]*2)
+                        
+
 
                         if self.MapToken[askNodeX][askNodeY] == -1:
 
@@ -281,7 +284,7 @@ class Supervisor:
 
         if verSim == 1:
             for idx in range(len(self.robots)):    
-                if self.robots[idx].state == st_ASK:
+                if self.robots[idx].state == st_ASK or self.robots[idx].state == st_preASK :
                     for x in range(numGridX*2):
                         for y in range(numGridX*2):
                             if x != int(2*self.robots[idx].path[self.robots[idx].indexPath][0]) and y != int(2*self.robots[idx].path[self.robots[idx].indexPath][1]) and self.MapToken[x][y] == idx:
@@ -317,7 +320,7 @@ class Supervisor:
                 if self.robots[idx].state == st_ASK and flag == 0 :
                     cyc = self.push_deadlock(idx)
                     if len(cyc) != 0:
-                        print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                        # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
                             if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0:
@@ -447,9 +450,12 @@ class robot(object):
         self.path = []
         self.spotlight = False
         self.indexPath = 0
+        self.indexRun = 1
         self.state = st_ASK
+        self.run = 0
         self.priority_level = 0
 
+        self.tmpSpeed = speed
         self.countPush = 0
 
         self.task = list()
@@ -492,15 +498,26 @@ class robot(object):
             self.state = st_DONE
         else:
             self.state =  st_RUN
+            self.run = 1 
             self.indexPath += 1
 
     def get_state(self):
         return self.state
 
     def move(self):
-        if self.state == st_RUN:   
+        print("222")
+        print(self.indexPath)
+        print(self.indexRun)
+        print(self.path[self.indexPath])
+        # if self.state == st_RUN:   
+        #     print("333")
+        #     print(self.indexPath)
+        #     print(self.indexRun)
+        acce = 0.02
+        if self.indexPath == self.indexRun:
+
             #Test if the robot has achived  haft of the sector
-            middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
+            distance = math.sqrt((self.path[self.indexPath][0]*sectorSize- self.x)**2 + (self.path[self.indexPath][1]*sectorSize- self.y)**2)
             loc_error = math.sqrt((self.path[self.indexPath-1][0]*sectorSize- self.x)**2 + (self.path[self.indexPath-1][1]*sectorSize- self.y)**2)
 
             # gap = sectorSize/14
@@ -512,9 +529,39 @@ class robot(object):
 
             # runnign
             self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
+                # self.speed = speed
+            # print("distance" +str(distance))
+            # print("location x:"+str(self.x) +"and y: "+str(self.y))
+            # input()
+            if distance <= 2*robotRadius and  self.tmpSpeed > self.speed/5:
+                self.tmpSpeed = self.tmpSpeed-acce
+            
+            if distance <= sectorSize/100:
+                self.tmpSpeed = 0
+
+            velx = math.cos(self.orient) * self.tmpSpeed
+            vely = math.sin(self.orient) * self.tmpSpeed
+            self.x = velx*timeStep + self.x 
+            self.y = vely*timeStep + self.y
+        else:
+                            #Test if the robot has achived  haft of the sector
+            middle_point = (self.path[self.indexRun-1] + self.path[self.indexRun])*sectorSize/2
+            loc_error = math.sqrt((self.path[self.indexRun-1][0]*sectorSize- self.x)**2 + (self.path[self.indexRun-1][1]*sectorSize- self.y)**2)
+
+            # gap = sectorSize/14
+            # if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) and self.release_prevNode == -1:
+            #     self.release_prevNode = 1        
+
+            if ( loc_error > 2*robotRadius) and self.release_prevNode == -1:
+                self.release_prevNode = 1                  
+            
+            if self.tmpSpeed < self.speed:
+                self.tmpSpeed += acce
+            # runnign
+            self.orient = get_angle(self.path[self.indexRun]*sectorSize - [self.x,self.y])
             # self.speed = speed
-            velx = math.cos(self.orient) * self.speed
-            vely = math.sin(self.orient) * self.speed
+            velx = math.cos(self.orient) * self.tmpSpeed
+            vely = math.sin(self.orient) * self.tmpSpeed
             self.x = velx*timeStep + self.x 
             self.y = vely*timeStep + self.y
 
@@ -526,9 +573,16 @@ class robot(object):
     def reachNodePath(self):
         # if( self.indexPath == len(self.path)-1):
         #     self.state = st_DONE
-        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100) and self.state == st_RUN:
-            self.release_prevNode = -1
+        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= 2*robotRadius) and self.state == st_RUN:
             self.state = st_ASK
+        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexRun]*sectorSize )) <= sectorSize/100) and self.state == st_RUN:
+            self.indexRun += 1
+            self.release_prevNode = -1
+            if self.indexPath ==self.indexRun:
+                self.run = 0
+            print("---")
+            print(self.indexRun)
+            print(self.indexPath)
             if self.countPush != 0:
                 self.countPush -= 1
             else: 
