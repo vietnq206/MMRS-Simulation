@@ -13,7 +13,7 @@ from enum import Enum
 from readfile import *
 
 
-verSim = 1
+verSim = 0
 
 #Map init
  
