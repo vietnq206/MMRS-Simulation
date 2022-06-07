@@ -37,11 +37,11 @@ def main():
 
  
 
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
 
 
     # robots.append(robot(0,0,robotRadius,25,(223,124,216)))
@@ -104,9 +104,9 @@ def main():
     #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
-    for i in range(15,20):
-        robots[i].loc_node_x = 4+(i-15)*2
-        robots[i].loc_node_y = 3
+    # for i in range(15,20):
+    #     robots[i].loc_node_x = 4+(i-15)*2
+    #     robots[i].loc_node_y = 3
 
         # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
         # .planning(4+(i-15)*2,3, 6+(i-15) , 19, access_nodes)) 
@@ -244,6 +244,7 @@ def main():
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                supervisor.print_register_map()
                 pos =pygame.mouse.get_pos()
 
 

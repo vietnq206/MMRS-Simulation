@@ -13,7 +13,7 @@ from enum import Enum
 from readfile import *
 
 
-verSim = 0
+verSim = 1
 
 #Map init
  
@@ -210,6 +210,7 @@ class Supervisor:
             c += 1
             if c == 10:
                 input()
+                return list()
         
         return list()
 
@@ -280,6 +281,7 @@ class Supervisor:
                         self.robots[idx].request_accepted()        
 
         if verSim == 1:
+            assigned_rb = list()
             for idx in range(len(self.robots)):    
                 if self.robots[idx].state == st_ASK:
                     for x in range(numGridX*2):
@@ -292,31 +294,36 @@ class Supervisor:
                     askNodeX = int(self.robots[idx].asking_node()[0]*2)
                     askNodeY = int(self.robots[idx].asking_node()[1]*2)
                     if self.MapToken[askNodeX][askNodeY] == -1:
-                        if [askNodeX,askNodeY] in list_robot_ask:
-                            tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
-                            if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
-                                list_robot_ask[tmpIdx] = list()
-                                list_robot_ask[idx] = [askNodeX,askNodeY]
-                        else:
-                            list_robot_ask[idx] = [askNodeX,askNodeY]
-                            
-                                                                                                                    
-            assigned_rb = list()
-            for idx in range(len(list_robot_ask)):
-                if len(list_robot_ask[idx]) > 0:
-                    if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
-                        self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
-                        # if idx == 12:
-                        #     print("1")
-                        #     input()
+                        self.MapToken[askNodeX][askNodeY] = idx
                         assigned_rb.append(idx)
                         self.robots[idx].request_accepted()  
+
+                        # if [askNodeX,askNodeY] in list_robot_ask:
+                        #     tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
+                        #     if (self.robots[tmpIdx].priority_level < self.robots[idx].priority_level):
+                        #         list_robot_ask[tmpIdx] = list()
+                        #         list_robot_ask[idx] = [askNodeX,askNodeY]
+                        # else:
+                        #     list_robot_ask[idx] = [askNodeX,askNodeY]
+                            
+                                                                                                                    
+            
+            # for idx in range(len(list_robot_ask)):
+            #     if len(list_robot_ask[idx]) > 0:
+            #         if (self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] == -1 and self.robots[idx].get_state() == st_ASK):
+            #             self.MapToken[list_robot_ask[idx][0]][list_robot_ask[idx][1]] = idx
+            #             # if idx == 12:
+            #             #     print("1")
+            #             #     input()
+            #             assigned_rb.append(idx)
+            #             self.robots[idx].request_accepted()  
 
             flag = 0
             for idx in range(len(self.robots)):
                 if self.robots[idx].state == st_ASK and flag == 0 :
                     cyc = self.push_deadlock(idx)
                     if len(cyc) != 0:
+                        print(cyc)
                         print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
