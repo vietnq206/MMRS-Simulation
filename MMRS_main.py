@@ -21,7 +21,7 @@ def main():
     robots.append(robot(0,0,robotRadius,20,(0,0,255)))
     robots.append(robot(0,0,robotRadius,20,(0,0,255)))
  
-    robots.append(robot(0,0,robotRadius,22,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
     robots.append(robot(0,0,robotRadius,21,(0,0,255)))
     robots.append(robot(0,0,robotRadius,20,(0,0,255)))
     robots.append(robot(0,0,robotRadius,25,(0,0,255)))
@@ -37,11 +37,11 @@ def main():
 
  
 
-    robots.append(robot(0,0,robotRadius,22,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
-    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,22,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
 
     # robots.append(robot(0,0,robotRadius,22,(0,0,255)))
     # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
@@ -87,12 +87,12 @@ def main():
         otcs_nodes.extend(elm.nodes)
 
     access_nodes = list()
-    for row in range(0,numGridX):
+    for row in range(1,numGridX):
         for col in range(0,numGridY):
             if (row,col) not in otcs_nodes:
                 access_nodes.append((row,col))
 
-    for row in range(0,numGridX-1):
+    for row in range(1,numGridX-1):
         for col in range(0,numGridY-1):
             if (row+0.5,col+0.5) not in otcs_nodes:
                 access_nodes.append((row+0.5,col+0.5))
@@ -112,9 +112,9 @@ def main():
     #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
-    for i in range(15,20):
-        robots[i].loc_node_x = 4+(i-15)*2
-        robots[i].loc_node_y = 18
+    # for i in range(15,20):
+    #     robots[i].loc_node_x = 4+(i-15)*2
+    #     robots[i].loc_node_y = 18
 
     # # for i in range(20,25):
     #     robots[i].loc_node_x = 4+(i-20)*2
@@ -175,13 +175,15 @@ def main():
 
 
 
-
+    # input()
 
     clock = pygame.time.Clock()
     c = 1
     nhap = 1
     runTime = 0
     while run:
+ 
+
         runTime += 1
         print(runTime)
         clock.tick(200)
@@ -213,6 +215,7 @@ def main():
             elm.draw(screen)
         # print("--------d--")
         #Task assignment:
+        # dume = list()
         if nhap == 1:
             for rb in range(len(robots)):
             
@@ -221,6 +224,10 @@ def main():
 
 
                 path = supervisor.gen_Path(rb,0)
+                # path = supervisor.generate_path_sigle(rb)
+                # print(path)
+                # dume.append(path)
+        
                 # print("Path generate of robot: " + str(rb))
                 # print(path)
                 print("----------")
@@ -229,6 +236,7 @@ def main():
                 robots[rb].y = path[0][1]*sectorSize              
 
             input() 
+            np.save('listPath_Uni.npy',dume, allow_pickle=True)
             nhap = 0
         # print("--------dx--")
         supervisor.ask_register()

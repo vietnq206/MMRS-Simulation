@@ -131,12 +131,16 @@ class Supervisor:
         self.access_nodes = access_nodes
         self.robots = robots
         self.MapToken = np.zeros( (numGridX*2,numGridY*2) , dtype=np.int64) - 1
+        self.MapResource = np.zeros( (numGridX*2,numGridY*2) , dtype=np.int64) - 1
+
+
         self.Index_order = 0
         self.List_order = list()
         self.Order_done = list()
         self.robots_alloc = [list()]*numGridX*2 # using to manage priority of robots
 
         self.dict_directRobots = dict()
+        self.InitPath = np.load('listPath.npy',allow_pickle = True)
 
         for idx in range(len(self.robots)):
             if self.MapToken[int(self.robots[idx].loc_node_x*2)][int(self.robots[idx].loc_node_y*2)] == -1:
@@ -152,9 +156,9 @@ class Supervisor:
                 #             if self.MapToken[i][j] == idx:
                 #                 self.MapToken[i][j]  = -1    
                  
+                nodeRelease = self.robots[idx].path[self.robots[idx].doneIdx]
 
-
-                self.MapToken[int(self.robots[idx].release_node()[0]*2)][int(self.robots[idx].release_node()[1]*2)] = -1  
+                self.MapToken[int(nodeRelease[0]*2)][int(nodeRelease[1]*2)] = -1  
                 self.robots[idx].release_prevNode = 0     
 
     def deadlock_detection(self,rb):
@@ -166,12 +170,13 @@ class Supervisor:
         c = 0
         while ( i_rb != -1 ):
             # print("robot:"+str(i_rb))
-            if self.robots[i_rb].state == st_RUN and self.robots[i_rb].release_prevNode == -1 :
-                return True
-            if self.robots[i_rb].release_prevNode == 1:
-                n_node = self.robots[i_rb].node_deadlock()
-            else:
-                n_node = self.robots[i_rb].asking_node()
+            # if self.robots[i_rb].state == st_RUN and self.robots[i_rb].release_prevNode == -1 :
+            #     return True
+            # if self.robots[i_rb].release_prevNode == 1:
+            #     n_node = self.robots[i_rb].node_deadlock()
+            # else:
+            
+            n_node = self.robots[i_rb].asking_node()
             if n_node[0] == self.robots[rb].asking_node()[0] and n_node[1] == self.robots[rb].asking_node()[1]:
                 return False
             i_rb = self.MapToken[int(n_node[0]*2)][int(n_node[1]*2)]
@@ -204,7 +209,7 @@ class Supervisor:
             n_node = self.robots[i_rb].asking_node()
             if n_node[0] == self.robots[rb].asking_node()[0] and n_node[1] == self.robots[rb].asking_node()[1]:
                 return list()
-            i_rb = self.MapToken[int(n_node[0]*2)][int(n_node[1]*2)]
+            i_rb = self.MapResource[int(n_node[0]*2)][int(n_node[1]*2)]
             if rb == i_rb:
                 return cyclic_deadlock
             c += 1
@@ -282,21 +287,40 @@ class Supervisor:
 
         if verSim == 1:
             assigned_rb = list()
-            for idx in range(len(self.robots)):    
-                if self.robots[idx].state == st_ASK:
+            for idx in range(len(self.robots)):
+                if self.robots[idx].state == st_DONE and self.robots[idx].d == 0: 
                     for x in range(numGridX*2):
                         for y in range(numGridX*2):
-                            if x != int(2*self.robots[idx].path[self.robots[idx].indexPath][0]) and y != int(2*self.robots[idx].path[self.robots[idx].indexPath][1]) and self.MapToken[x][y] == idx:
+                            if self.MapResource[x][y] == idx:
+                                self.MapResource[x][y] = -1
+                                self.robots[idx].d = 1                            
+                            if self.MapToken[x][y] == idx:
                                 self.MapToken[x][y] = -1
+                                self.robots[idx].d = 1
+                if self.robots[idx].state == st_ASK:
+                #     for x in range(numGridX*2):
+                #         for y in range(numGridX*2):
+                #             if x != int(2*self.robots[idx].path[self.robots[idx].indexPath][0]) and y != int(2*self.robots[idx].path[self.robots[idx].indexPath][1]) and self.MapToken[x][y] == idx:
+                #                 self.MapToken[x][y] = -1
                                 
                     # if self.MapToken[int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][0]))][int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][1]))] == idx:
                     #     self.MapToken[int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][0]))][int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][1]))] = -1
+                    
+                    currNodeX = int(self.robots[idx].curr_node()[0]*2) 
+                    currNodeY = int(self.robots[idx].curr_node()[1]*2) 
+                    
                     askNodeX = int(self.robots[idx].asking_node()[0]*2)
                     askNodeY = int(self.robots[idx].asking_node()[1]*2)
+
                     if self.MapToken[askNodeX][askNodeY] == -1:
                         self.MapToken[askNodeX][askNodeY] = idx
-                        assigned_rb.append(idx)
-                        self.robots[idx].request_accepted()  
+
+                        self.MapResource[askNodeX][askNodeY] = idx
+                        self.MapResource[currNodeX][currNodeY] = -1
+                        assigned_rb.append(idx)                       
+                        self.robots[idx].request_accepted()
+
+
 
                         # if [askNodeX,askNodeY] in list_robot_ask:
                         #     tmpIdx = list_robot_ask.index([askNodeX,askNodeY])
@@ -327,7 +351,7 @@ class Supervisor:
                         print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
-                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0 and ( self.robots[idx].node_deadlock()[0] != elm[0] and self.robots[idx].node_deadlock()[1] != elm[1] ):
+                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0 and ( self.robots[idx].node_deadlock()[0] != elm[0] and self.robots[idx].node_deadlock()[1] != elm[1] and elm[0]!= 0):
                                 # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1, self.robots[idx].curr_node())
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1,np.array([elm[0],elm[1]]))
@@ -360,13 +384,51 @@ class Supervisor:
     def generate_path_sigle(self,rbIdx):
         if ( self.Index_order == 10 ): #index to the task
             self.Index_order = 0
-        if len(self.robots[rbIdx].task) == 0:
-            task = list_task_2['task'][self.Index_order]
-            node_seq = list()
-            for elm in task['NumOrder']:
-                node_seq.append(G_loc_package_load[elm])
-            node_seq.append(G_loc_outport[task['port']])
-            self.robots[rbIdx].task = node_seq
+        o_path = self.InitPath[self.Index_order]
+        tmp = list()
+        tmp1 = list()
+        node_seq = [self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]
+
+    
+        rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+                                    .planning(node_seq[0] ,node_seq[1], o_path[0][0], o_path[0][1], self.access_nodes)
+        for x,y in zip( rx,ry): 
+            tmp.append(np.array([x,y]))
+        tmp.pop()
+        rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+                                    .planning(o_path[-1][0] ,o_path[-1][1], node_seq[0], node_seq[1], self.access_nodes)
+        for x,y in zip( rx,ry): 
+            tmp1.append(np.array([x,y]))
+        tmp1.pop(0)
+        tmp.extend(o_path)
+        tmp.extend(tmp1)
+
+        self.Index_order+= 1
+        # for i in range(len(o_path)):
+
+
+        return tmp
+
+
+
+
+
+
+
+
+
+
+
+
+        # if ( self.Index_order == 10 ): #index to the task
+        #     self.Index_order = 0
+        # if len(self.robots[rbIdx].task) == 0:
+        #     task = list_task_2['task'][self.Index_order]
+        #     node_seq = list()
+        #     for elm in task['NumOrder']:
+        #         node_seq.append(G_loc_package_load[elm])
+        #     node_seq.append(G_loc_outport[task['port']])
+        #     self.robots[rbIdx].task = node_seq
               
 
 
@@ -446,6 +508,9 @@ class robot(object):
         self.x = nodeX*sectorSize
         self.y = nodeY*sectorSize
         self.speed = speed
+        self.tmpSpeed = speed
+
+        self.d = 0
         self.orient = 0
         self.radius = radius
         self.color = color
@@ -461,6 +526,11 @@ class robot(object):
 
         self.task = list()
         self.indexTask = -1
+        
+        #trying
+        self.doneIdx = 0
+        self.AllocatedNodes = list()
+        self.DoneNodes = list()
 
     def draw(self, win):
         if self.spotlight :
@@ -495,35 +565,56 @@ class robot(object):
         return self.path[self.indexPath+1:len(self.path)] 
     
     def request_accepted(self):
+        
         if ( self.indexPath == len(self.path)-1):
             self.state = st_DONE
         else:
-            self.state =  st_RUN
+            
+            self.state = st_RUN
             self.indexPath += 1
+            self.AllocatedNodes.append(self.path[self.indexPath])
 
     def get_state(self):
         return self.state
 
     def move(self):
-        if self.state == st_RUN:   
+        if self.indexPath - self.doneIdx > 0:   
+            target = self.path[self.doneIdx+1]
             #Test if the robot has achived  haft of the sector
-            middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
-            loc_error = math.sqrt((self.path[self.indexPath-1][0]*sectorSize- self.x)**2 + (self.path[self.indexPath-1][1]*sectorSize- self.y)**2)
+            # middle_point = (self.path[self.indexPath-1] + self.path[self.indexPath])*sectorSize/2
+            loc_error = math.sqrt((self.path[self.doneIdx][0]*sectorSize- self.x)**2 + (self.path[self.doneIdx][1]*sectorSize- self.y)**2)
 
             # gap = sectorSize/14
             # if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) and self.release_prevNode == -1:
             #     self.release_prevNode = 1        
 
+            if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) < robotRadius *2 and self.indexPath - self.doneIdx == 1 ):
+                self.state = st_ASK 
+                if self.tmpSpeed > 10 :
+                    self.tmpSpeed -= 0.2
+            else:
+                if self.tmpSpeed < self.speed :
+                    self.tmpSpeed += 0.1
+                    
+            
+
+
             if ( loc_error > 2*robotRadius) and self.release_prevNode == -1:
                 self.release_prevNode = 1                  
 
+            
+
             # runnign
-            self.orient = get_angle(self.path[self.indexPath]*sectorSize - [self.x,self.y])
+            self.orient = get_angle(target*sectorSize - [self.x,self.y])
             # self.speed = speed
-            velx = math.cos(self.orient) * self.speed
-            vely = math.sin(self.orient) * self.speed
+            velx = math.cos(self.orient) * self.tmpSpeed
+            vely = math.sin(self.orient) * self.tmpSpeed
             self.x = velx*timeStep + self.x 
             self.y = vely*timeStep + self.y
+        else:
+            self.state = st_ASK
+            self.tmpSpeed = 5
+        
 
 
 
@@ -531,15 +622,17 @@ class robot(object):
         
 
     def reachNodePath(self):
-        # if( self.indexPath == len(self.path)-1):
-        #     self.state = st_DONE
-        if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) <= sectorSize/100) and self.state == st_RUN:
-            self.release_prevNode = -1
-            self.state = st_ASK
-            if self.countPush != 0:
-                self.countPush -= 1
-            else: 
-                self.spotlight = False
+        if( self.indexPath == len(self.path)-1):
+            self.state = st_DONE
+        else:
+            if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.doneIdx+1]*sectorSize )) <= sectorSize/100) :
+                self.release_prevNode = -1
+                self.doneIdx += 1
+        
+                if self.countPush != 0:
+                    self.countPush -= 1
+                else: 
+                    self.spotlight = False
             
 
     def hitBoundaries(self):
