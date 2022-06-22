@@ -209,7 +209,7 @@ class Supervisor:
                 return cyclic_deadlock
             c += 1
             if c == 10:
-                input()
+                # input()
                 return list()
         
         return list()
@@ -327,7 +327,7 @@ class Supervisor:
                         print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
-                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0:
+                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0 and ( self.robots[idx].node_deadlock()[0] != elm[0] and self.robots[idx].node_deadlock()[1] != elm[1] ):
                                 # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1, self.robots[idx].curr_node())
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1,np.array([elm[0],elm[1]]))
