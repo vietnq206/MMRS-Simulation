@@ -9,6 +9,7 @@ import numpy as np
 from dijkstra_search import DijkstraSearch
 from pathPlaning import *
 import json
+import random
 from enum import Enum
 from readfile import *
 
@@ -25,7 +26,7 @@ sectorSize = int(wScreen/20)
 
 speedMax = 20
 timeStep = 0.01
-robotRadius = 6
+robotRadius = 7
 
 ############## State of the robot
 st_STOP = 0
@@ -94,8 +95,6 @@ def find_adj(a,b):
 
         if (a[0]+1,a[1])  in b:
             out.append([a[0]+1,a[1]])
-
-    
     if (a[0]-0.5,a[1]-0.5)  in b:
         out.append([a[0]-0.5,a[1]-0.5])
 
@@ -108,10 +107,44 @@ def find_adj(a,b):
     if (a[0]+0.5,a[1]-0.5)  in b:
         out.append([a[0]+0.5,a[1]-0.5])
 
+
+
+
+    
+
     return out
 
+def checkIn(a,b):
+    for elm in b:
+        if np.all(a==elm):
+            return True
+    return False
 
+def node_compare(a,b):
+    if (a[0]==b[0]) and (a[1]==b[1]):
+        return True
+    else:
+        return False 
 
+def setDirection(a,b):
+    for i in range(len(a)-1):
+        snode = str(a[i][0])+':'+str(a[i][1]) 
+     
+        if snode not in b:
+            b[snode] = {'out':[a[i+1]]}
+        elif 'out' not in b[snode] :
+             b[snode]['out'] = [a[i+1]]
+        elif checkIn(a[i+1],b[snode]['out'])==False:
+                b[snode]['out'].append(a[i+1])
+    for i in range(1,len(a)):
+        snode = str(a[i][0])+':'+str(a[i][1]) 
+     
+        if snode not in b:
+            b[snode] = {'in':[a[i-1]]}
+        elif 'in' not in b[snode] :
+             b[snode]['in'] = [a[i-1]]
+        elif checkIn(a[i-1],b[snode]['in'])==False:
+                b[snode]['in'].append(a[i-1])
 
 
 
@@ -133,6 +166,7 @@ class Supervisor:
         self.MapToken = np.zeros( (numGridX*2,numGridY*2) , dtype=np.int64) - 1
         self.MapResource = np.zeros( (numGridX*2,numGridY*2) , dtype=np.int64) - 1
 
+        self.direction_infor = dict()
 
         self.Index_order = 0
         self.List_order = list()
@@ -140,7 +174,8 @@ class Supervisor:
         self.robots_alloc = [list()]*numGridX*2 # using to manage priority of robots
 
         self.dict_directRobots = dict()
-        self.InitPath = np.load('listPath.npy',allow_pickle = True)
+        self.InitPath = np.load('listPath_Bi.npy',allow_pickle = True)
+        self.highPriority = dict()
 
         for idx in range(len(self.robots)):
             if self.MapToken[int(self.robots[idx].loc_node_x*2)][int(self.robots[idx].loc_node_y*2)] == -1:
@@ -155,11 +190,11 @@ class Supervisor:
                             
                 #             if self.MapToken[i][j] == idx:
                 #                 self.MapToken[i][j]  = -1    
-                 
-                nodeRelease = self.robots[idx].path[self.robots[idx].doneIdx]
-
-                self.MapToken[int(nodeRelease[0]*2)][int(nodeRelease[1]*2)] = -1  
-                self.robots[idx].release_prevNode = 0     
+                for i in range(1): 
+                    nodeRelease = self.robots[idx].path[self.robots[idx].doneIdx-i]
+                    if  self.MapToken[int(nodeRelease[0]*2)][int(nodeRelease[1]*2)] == idx:
+                        self.MapToken[int(nodeRelease[0]*2)][int(nodeRelease[1]*2)] = -1  
+                        self.robots[idx].release_prevNode = 0     
 
     def deadlock_detection(self,rb):
         # print("In"+str(rb))
@@ -298,10 +333,10 @@ class Supervisor:
                                 self.MapToken[x][y] = -1
                                 self.robots[idx].d = 1
                 if self.robots[idx].state == st_ASK:
-                #     for x in range(numGridX*2):
-                #         for y in range(numGridX*2):
-                #             if x != int(2*self.robots[idx].path[self.robots[idx].indexPath][0]) and y != int(2*self.robots[idx].path[self.robots[idx].indexPath][1]) and self.MapToken[x][y] == idx:
-                #                 self.MapToken[x][y] = -1
+                    # for x in range(numGridX*2):
+                    #     for y in range(numGridX*2):
+                    #         if x != int(2*self.robots[idx].path[self.robots[idx].indexPath][0]) and y != int(2*self.robots[idx].path[self.robots[idx].indexPath][1]) and self.MapToken[x][y] == idx:
+                    #             self.MapToken[x][y] = -1
                                 
                     # if self.MapToken[int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][0]))][int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][1]))] == idx:
                     #     self.MapToken[int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][0]))][int(2*(self.robots[idx].path[self.robots[idx].indexPath-1][1]))] = -1
@@ -312,13 +347,40 @@ class Supervisor:
                     askNodeX = int(self.robots[idx].asking_node()[0]*2)
                     askNodeY = int(self.robots[idx].asking_node()[1]*2)
 
-                    if self.MapToken[askNodeX][askNodeY] == -1:
-                        self.MapToken[askNodeX][askNodeY] = idx
+                    nodeStr = str(askNodeX)+':'+str(askNodeY)
 
-                        self.MapResource[askNodeX][askNodeY] = idx
-                        self.MapResource[currNodeX][currNodeY] = -1
-                        assigned_rb.append(idx)                       
-                        self.robots[idx].request_accepted()
+                    if self.MapToken[askNodeX][askNodeY] == -1:
+                        if nodeStr in self.highPriority:
+                            if self.highPriority[nodeStr][1] == 0 and self.highPriority[nodeStr][0] == idx :
+                                    
+                                self.MapToken[askNodeX][askNodeY] = idx
+
+                                self.MapResource[askNodeX][askNodeY] = idx
+                                self.MapResource[currNodeX][currNodeY] = -1
+                                assigned_rb.append(idx)                       
+                                self.robots[idx].request_accepted()
+                                del self.highPriority[nodeStr]
+                            elif self.highPriority[nodeStr][1] == 1 and self.highPriority[nodeStr][0] != idx:
+                                self.MapToken[askNodeX][askNodeY] = idx
+
+                                self.MapResource[askNodeX][askNodeY] = idx
+                                self.MapResource[currNodeX][currNodeY] = -1
+                                assigned_rb.append(idx)                       
+                                self.robots[idx].request_accepted()   
+                                self.highPriority[nodeStr][1] -= 1    
+
+                        else:
+                            self.MapToken[askNodeX][askNodeY] = idx
+
+                            self.MapResource[askNodeX][askNodeY] = idx
+                            self.MapResource[currNodeX][currNodeY] = -1
+                            assigned_rb.append(idx)                       
+                            self.robots[idx].request_accepted()   
+                                 
+
+
+                                    
+                            
 
 
 
@@ -344,22 +406,44 @@ class Supervisor:
 
             flag = 0
             for idx in range(len(self.robots)):
+                currNodeX = int(self.robots[idx].curr_node()[0]*2) 
+                currNodeY = int(self.robots[idx].curr_node()[1]*2) 
                 if self.robots[idx].state == st_ASK and flag == 0 :
                     cyc = self.push_deadlock(idx)
                     if len(cyc) != 0:
                         print(cyc)
                         print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                        
                         adj = find_adj(self.robots[idx].curr_node(),self.access_nodes)               
                         for elm in adj:
-                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0 and ( self.robots[idx].node_deadlock()[0] != elm[0] and self.robots[idx].node_deadlock()[1] != elm[1] and elm[0]!= 0):
+                            if  self.MapToken[int(elm[0])*2][int(elm[1])*2] == -1 and flag== 0 \
+                                    and not node_compare(self.robots[idx].node_deadlock(),elm) \
+                                    and not node_compare(self.robots[idx].asking_node(),elm) \
+                                    and not node_compare(self.robots[cyc[-1]].node_deadlock(),elm) \
+                                    and elm[0]!= 0:
                                 # print("Robot num: "+str(idx)+" with status "+str(self.robots[idx].state)+" next node ["+ str(self.robots[idx].curr_node()[0])+","+str(self.robots[idx].curr_node()[1]))
+                                highPrioNode = str(self.robots[idx].curr_node()[0]*2)+':'+str(self.robots[idx].curr_node()[1]*2)
+                                self.highPriority[highPrioNode] = [idx,1]
+
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1, self.robots[idx].curr_node())
                                 self.robots[idx].path.insert(self.robots[idx].indexPath+1,np.array([elm[0],elm[1]]))
-                                self.MapToken[int(elm[0])*2][int(elm[1])*2] = idx
+                                askNodeX = int(self.robots[idx].asking_node()[0]*2)
+                                askNodeY = int(self.robots[idx].asking_node()[1]*2)
+
+                                self.MapToken[askNodeX][askNodeY] = idx
+                                
+                                self.MapResource[int(elm[0])*2][int(elm[1])*2] = idx
+                                self.MapResource[currNodeX][currNodeY] = -1
+
                                 self.robots[idx].spotlight = True
                                 self.robots[idx].countPush += 1
                                 self.robots[idx].request_accepted() 
                                 flag = 1
+
+                                
+
+
+
                                 break                        
 
     def check_collision(self):
@@ -382,32 +466,32 @@ class Supervisor:
  
 
     def generate_path_sigle(self,rbIdx):
-        if ( self.Index_order == 10 ): #index to the task
+        if ( self.Index_order == len(self.robots) ): #index to the task
             self.Index_order = 0
-        o_path = self.InitPath[self.Index_order]
-        tmp = list()
-        tmp1 = list()
-        node_seq = [self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]
+        # o_path = self.InitPath[self.Index_order]
+        # tmp = list()
+        # tmp1 = list()
+        # node_seq = [self.robots[rbIdx].loc_node_x,self.robots[rbIdx].loc_node_y]
 
     
-        rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
-                                    .planning(node_seq[0] ,node_seq[1], o_path[0][0], o_path[0][1], self.access_nodes)
-        for x,y in zip( rx,ry): 
-            tmp.append(np.array([x,y]))
-        tmp.pop()
-        rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
-                                    .planning(o_path[-1][0] ,o_path[-1][1], node_seq[0], node_seq[1], self.access_nodes)
-        for x,y in zip( rx,ry): 
-            tmp1.append(np.array([x,y]))
-        tmp1.pop(0)
-        tmp.extend(o_path)
-        tmp.extend(tmp1)
-
+        # rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+        #                             .planning(node_seq[0] ,node_seq[1], o_path[0][0], o_path[0][1], self.access_nodes)
+        # for x,y in zip( rx,ry): 
+        #     tmp.append(np.array([x,y]))
+        # tmp.pop()
+        # rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
+        #                             .planning(o_path[-1][0] ,o_path[-1][1], node_seq[0], node_seq[1], self.access_nodes)
+        # for x,y in zip( rx,ry): 
+        #     tmp1.append(np.array([x,y]))
+        # tmp1.pop(0)
+        # tmp.extend(o_path)
+        # tmp.extend(tmp1)
+        
         self.Index_order+= 1
         # for i in range(len(o_path)):
 
 
-        return tmp
+        return self.InitPath[self.Index_order-1]
 
 
 
@@ -463,13 +547,19 @@ class Supervisor:
         node_seq.append(node_seq[0])
 
         self.Index_order +=1
+        
         o_path.append(np.array([node_seq[0][0],node_seq[0][1]]))
         for i in range(len(node_seq)-1):
+            # tmp = list()
             rx,ry = VisibilityRoadMap(robotRadius, do_plot=False)\
-                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], self.access_nodes)
+                                    .planning(node_seq[i][0] ,node_seq[i][1], node_seq[i+1][0], node_seq[i+1][1], self.access_nodes, self.direction_infor)
             for x,y in zip( rx,ry): 
+                # tmp.append(np.array([x,y]))
                 if o_path[-1][0] != x or o_path[-1][1] != y: 
                     o_path.append(np.array([x,y]))
+            # setDirection(tmp,self.direction_infor)
+            
+            
 
         for i in range(len(o_path)-1):       #for deadlock avoidance
             direct = direction(o_path[i],o_path[i+1])
@@ -513,7 +603,7 @@ class robot(object):
         self.d = 0
         self.orient = 0
         self.radius = radius
-        self.color = color
+        self.color = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
         self.collision = False
         self.release_prevNode = -1
         self.path = []
@@ -588,13 +678,15 @@ class robot(object):
             # if ( self.x > middle_point[0] - gap and self.x < middle_point[0] + gap) and  ( self.y > middle_point[1] - gap and self.y < middle_point[1] + gap) and self.release_prevNode == -1:
             #     self.release_prevNode = 1        
 
-            if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) < robotRadius *2 and self.indexPath - self.doneIdx == 1 ):
+            if ( np.abs(np.linalg.norm([self.x,self.y] - self.path[self.indexPath]*sectorSize )) < robotRadius  and self.indexPath - self.doneIdx == 1 ):
                 self.state = st_ASK 
-                if self.tmpSpeed > 10 :
-                    self.tmpSpeed -= 0.2
+                # print("Ask! ")
+                # input()
+                if self.tmpSpeed > 1 :
+                    self.tmpSpeed -= 0.1
             else:
                 if self.tmpSpeed < self.speed :
-                    self.tmpSpeed += 0.1
+                    self.tmpSpeed += 0.05
                     
             
 
@@ -613,7 +705,7 @@ class robot(object):
             self.y = vely*timeStep + self.y
         else:
             self.state = st_ASK
-            self.tmpSpeed = 5
+            self.tmpSpeed = 10
         
 
 

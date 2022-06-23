@@ -37,11 +37,11 @@ def main():
 
  
 
-    # robots.append(robot(0,0,robotRadius,22,(0,0,255)))
-    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
-    # robots.append(robot(0,0,robotRadius,25,(0,0,255)))
-    # robots.append(robot(0,0,robotRadius,25,(0,0,255)))
-    # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,22,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,25,(0,0,255)))
+    robots.append(robot(0,0,robotRadius,20,(0,0,255)))
 
     # robots.append(robot(0,0,robotRadius,22,(0,0,255)))
     # robots.append(robot(0,0,robotRadius,20,(0,0,255)))
@@ -112,11 +112,11 @@ def main():
     #     # robots[i].pathAssign(VisibilityRoadMap(robotRadius, do_plot=False)\
     #     # .planning(19 ,2+(i-8)*2, 1, 18-(i-8)*2, access_nodes)) 
 
-    # for i in range(15,20):
-    #     robots[i].loc_node_x = 4+(i-15)*2
-    #     robots[i].loc_node_y = 18
+    for i in range(15,20):
+        robots[i].loc_node_x = 4+(i-15)*2
+        robots[i].loc_node_y = 18
 
-    # # for i in range(20,25):
+    # for i in range(20,25):
     #     robots[i].loc_node_x = 4+(i-20)*2
     #     robots[i].loc_node_y = 17
 
@@ -223,8 +223,8 @@ def main():
                 
 
 
-                path = supervisor.gen_Path(rb,0)
-                # path = supervisor.generate_path_sigle(rb)
+                # path = supervisor.gen_Path(rb,0)
+                path = supervisor.generate_path_sigle(rb)
                 # print(path)
                 # dume.append(path)
         
@@ -236,7 +236,7 @@ def main():
                 robots[rb].y = path[0][1]*sectorSize              
 
             input() 
-            np.save('listPath_Uni.npy',dume, allow_pickle=True)
+            # np.save('listPath_Bi.npy',dume, allow_pickle=True)
             nhap = 0
         # print("--------dx--")
         supervisor.ask_register()
@@ -266,6 +266,7 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 supervisor.print_register_map()
                 pos =pygame.mouse.get_pos()
+                input()
 
 
 

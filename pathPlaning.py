@@ -11,19 +11,26 @@ from dijkstra_search import DijkstraSearch
 
 show_animation = False
 
+def checkIn(a,b):
+    for elm in b:
+        if np.all(a==elm):
+            return True
+    return False
+
+
 class VisibilityRoadMap:
 
     def __init__(self, expand_distance, do_plot=False):
         self.expand_distance = expand_distance
         self.do_plot = do_plot
 
-    def planning(self, start_x, start_y, goal_x, goal_y, access_nodes):
+    def planning(self, start_x, start_y, goal_x, goal_y, access_nodes, direction_infor):
 
         nodes = self.generate_visibility_nodes(start_x, start_y,
                                                goal_x, goal_y, access_nodes)
 
 
-        road_map_info = self.generate_road_map_info(nodes)
+        road_map_info = self.generate_road_map_info(nodes,access_nodes,direction_infor)
 
         # if self.do_plot:
         #     self.plot_road_map(nodes, road_map_info)
@@ -48,8 +55,9 @@ class VisibilityRoadMap:
 
         # add vertexes in configuration space as nodes
         for elm in access_nodes:
-            if (start_x, start_y) != elm and (goal_x, goal_y) != elm:
-                nodes.append(DijkstraSearch.Node(elm[0], elm[1]))
+            if elm[0] != 0:
+                if (start_x, start_y) != elm and (goal_x, goal_y) != elm:
+                    nodes.append(DijkstraSearch.Node(elm[0], elm[1]))
 
         # for obstacle in obstacles:
         #     for vertex in obstacle.nodes:
@@ -83,12 +91,73 @@ class VisibilityRoadMap:
 
         return cvx_list, cvy_list
 
-    def generate_road_map_info(self, nodes):
+    def generate_road_map_info(self, nodes,access_nodes,direction_infor):
 
         road_map_info_list = []
 
         for target_node in nodes:
+            
             possible_reach_nodes = []
+            # tmp1 = []
+            # tmp2 = []
+            # snode = str(target_node.x)+':'+str(target_node.y)
+            # if snode not in direction_infor:
+            #     numOut = 0
+            #     numIn = 0
+            # else:
+            #     if 'out' not in direction_infor[snode]:
+            #         numOut = 0
+            #     else:
+            #         numOut = len(direction_infor[snode]['out'])
+            #     if 'in' not in direction_infor[snode]:
+            #         numIn = 0
+            #     else:
+            #         numIn = len(direction_infor[snode]['in'])    
+
+            # tmp1.append((target_node.x,target_node.y + 1)) 
+            # tmp1.append((target_node.x+1,target_node.y )) 
+            # tmp1.append((target_node.x-1,target_node.y )) 
+            # tmp1.append((target_node.x,target_node.y - 1)) 
+
+            # tmp2.append((target_node.x + 0.5,target_node.y + 0.5)) 
+            # tmp2.append((target_node.x - 0.5,target_node.y - 0.5)) 
+            # tmp2.append((target_node.x - 0.5,target_node.y + 0.5)) 
+            # tmp2.append((target_node.x + 0.5,target_node.y - 0.5)) 
+
+            # # print(numOut)
+            # # print(numIn)
+            # # print(direction_infor)
+            # # input()
+            # if numOut == 0 and numIn == 0:
+            #     possible_reach_nodes = tmp1 + tmp2
+            # elif numOut == 0:
+            #     for elm in tmp1+tmp2:
+         
+            #         if checkIn(np.array([elm[0],elm[1]]),direction_infor[snode]['in']) == False:
+            #             possible_reach_nodes.append(elm)
+            # elif numIn == 0 :
+            #     for elm in tmp1+tmp2:
+            #         if checkIn(np.array([elm[0],elm[1]]), direction_infor[snode]['out']) == True:
+            #             possible_reach_nodes.append(elm)        
+            #         else:
+            #             if target_node.x - int(target_node.x) == 0:
+            #                 if numOut < 7:
+            #                     possible_reach_nodes.append(elm) 
+            #             else :
+            #                 if numOut < 3:
+            #                     possible_reach_nodes.append(elm) 
+
+            # else:
+            #     for elm in tmp1+tmp2:
+            #                 if checkIn(np.array([elm[0],elm[1]]),direction_infor[snode]['in']) == False:
+            #                     possible_reach_nodes.append(elm)
+                                            
+
+
+
+
+
+    
 
             possible_reach_nodes.append((target_node.x,target_node.y + 1)) 
             possible_reach_nodes.append((target_node.x+1,target_node.y )) 
@@ -99,6 +168,11 @@ class VisibilityRoadMap:
             possible_reach_nodes.append((target_node.x - 0.5,target_node.y - 0.5)) 
             possible_reach_nodes.append((target_node.x - 0.5,target_node.y + 0.5)) 
             possible_reach_nodes.append((target_node.x + 0.5,target_node.y - 0.5)) 
+
+
+
+
+
 
 
 
